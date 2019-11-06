@@ -6,30 +6,43 @@
 #define ON 			  true
 #define OFF			  false
 
-#define LED_STRIP_1   		 0
-#define LED_STRIP_2   		 1
+#define NIGHT_LED_STRIP   	 0
+#define DAY_LED_STRIP   	 1
 #define STATUS_LED 	 		 2
-#define TURN_OFF 	 		 3
+#define CHANGE_MODE	 		 3
 
 #define NO_STRIPE_ON  		10
 
 #define SWITCH_STRIP_TIME 	1
 
-#define PERCENT(Perc)		((Perc * 255)/100)
-#define MINUTE_TO_SECS(Min)	(Min * 60)
+#define PERCENT(Perc)		((Perc * 255)/100) // Questa è una macro per converire il fading in percentuale
+
+// Associo dei numeri alle varie modalità operative
+enum
+{
+	NIGHT_MODE = 0,
+	DAY_MODE,
+	SWITCH_MODE,
+	MAX_MODES
+};
 
 Chrono SwitchLedStripe(Chrono::SECONDS);
 uint8_t WichStripeIsOn;
-bool TurnOffAll = true;
+uint8_t LedStripeMode = SWITCH_MODE;
 
-static void BlinkLed(int WichLed, int Delay)
+// Funzione per gestire il led di stato
+static void BlinkLed(int WichLed, int Delay, int Times)
 {
-	digitalWrite(WichLed, HIGH);
-	delay(Delay);
-	digitalWrite(WichLed, LOW);
-	delay(Delay);	
+	for(int i = 0; i < Times; i++)
+	{
+		digitalWrite(WichLed, HIGH);
+		delay(Delay);
+		digitalWrite(WichLed, LOW);
+		delay(Delay);
+	}	
 }
 
+// Funzione per gestire i singoli pin digitali
 static void TurnPin(int WichLed, bool Status)
 {
 	if(Status)
@@ -38,24 +51,28 @@ static void TurnPin(int WichLed, bool Status)
 		digitalWrite(WichLed, LOW);
 }
 
+// Funzione per gestire le uscite "analogiche" PWM
 static void TurnAnalogPin(int WichLed, int Percent)
 {
 	analogWrite(WichLed, PERCENT(Percent));
 }
-
+ 
+// Funzione per la gestione dello switch tra giorno e notte
 static void FadeLedStrips()
 {
 	uint8_t LedToTurnOn = 0, LedToTurnOff = 0;
-	if(WichStripeIsOn == LED_STRIP_1)
+	if(WichStripeIsOn == NIGHT_LED_STRIP)
 	{
-		LedToTurnOn = LED_STRIP_2;
-		LedToTurnOff = LED_STRIP_1;
+		LedToTurnOn = DAY_LED_STRIP;
+		LedToTurnOff = NIGHT_LED_STRIP;
 	}
 	else
 	{
-		LedToTurnOn = LED_STRIP_1;
-		LedToTurnOff = LED_STRIP_2;
+		LedToTurnOn = NIGHT_LED_STRIP;
+		LedToTurnOff = DAY_LED_STRIP;
 	}
+	// Lo switch avviene in maniera soft ovvero per passsare da una
+	// modalita all'altra ci mette 2.5s (25ms * 100)
 	for(int i = 0; i < 101; i++)
 	{
 		TurnAnalogPin(LedToTurnOn, i);
@@ -65,70 +82,74 @@ static void FadeLedStrips()
 	WichStripeIsOn = LedToTurnOn;
 }
 
-static void TurnStatusLed(bool Status)
-{
-	for(int i = 0; i < 5; i++)
-		BlinkLed(STATUS_LED, 50);
-	TurnPin(STATUS_LED, Status);	
-}
 
 void setup()
 {
+	// Inizializzo variabile per il cronometro
 	SwitchLedStripe.restart();
 	SwitchLedStripe.stop();
-	pinMode(LED_STRIP_1, OUTPUT);
-	pinMode(LED_STRIP_2, OUTPUT);
+
+	// Inizializzo i vari pin che mi serviranno
+	pinMode(NIGHT_LED_STRIP, OUTPUT);
+	pinMode(DAY_LED_STRIP, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
-	pinMode(TURN_OFF, INPUT);
-	if(!TurnOffAll)
-	{
-		TurnStatusLed(ON);
-		TurnAnalogPin(LED_STRIP_1, 100);	
-		TurnAnalogPin(LED_STRIP_2, 0);	
-		SwitchLedStripe.restart();
-		WichStripeIsOn = LED_STRIP_1;
-	}
-	else
-	{
-		TurnStatusLed(OFF);
-		TurnAnalogPin(LED_STRIP_1, 0);
-		TurnAnalogPin(LED_STRIP_2, 0);
-		WichStripeIsOn = NO_STRIPE_ON;		
-	}
+	pinMode(CHANGE_MODE, INPUT);
+
+	// Inizializzo la modalità di avvio 
+	// default: modalità switch
+	TurnPin(STATUS_LED, ON);	
+	TurnAnalogPin(NIGHT_LED_STRIP, 100);	
+	TurnAnalogPin(DAY_LED_STRIP, 0);	
+	SwitchLedStripe.restart();
+	WichStripeIsOn = NIGHT_LED_STRIP;
+	LedStripeMode = SWITCH_MODE;
 }
 
 
 void loop()
 {
-	if(digitalRead(TURN_OFF) == HIGH)
+	// Gestione del pulsante che consente il cambio di modalità
+	if(digitalRead(CHANGE_MODE) == HIGH)
 	{
-		TurnOffAll = !TurnOffAll;
-		if(TurnOffAll)
-			TurnStatusLed(OFF);
+		if(LedStripeMode < MAX_MODES - 1)
+			LedStripeMode++;
 		else
-			TurnStatusLed(ON);
-	}
-	if(!TurnOffAll)
-	{
-		if(WichStripeIsOn == NO_STRIPE_ON)
-		{
-			WichStripeIsOn = LED_STRIP_1;
-			TurnAnalogPin(LED_STRIP_1, 100);
-		}
-		if(SwitchLedStripe.hasPassed(MINUTE_TO_SECS(SWITCH_STRIP_TIME), true))
-		{
-			FadeLedStrips();
-		}
-	}
-	else
-	{
-		SwitchLedStripe.restart();
-		if(WichStripeIsOn != NO_STRIPE_ON)
-		{
-			TurnAnalogPin(LED_STRIP_1, 0);
-			TurnAnalogPin(LED_STRIP_2, 0);
-		}
-		WichStripeIsOn = NO_STRIPE_ON;
+			LedStripeMode = NIGHT_MODE;
 	}
 
+	// Macchina a stati per la gestione delle varie modalità 
+	switch(LedStripeMode)
+	{
+		case NIGHT_MODE:
+			if(WichStripeIsOn != NIGHT_LED_STRIP)
+			{
+				WichStripeIsOn = NIGHT_LED_STRIP;
+				BlinkLed(STATUS_LED, 250, 2);
+				TurnPin(STATUS_LED, OFF);				
+				TurnAnalogPin(NIGHT_LED_STRIP, 100);
+				TurnAnalogPin(DAY_LED_STRIP, 0);
+			}
+			SwitchLedStripe.restart();
+			break;
+		case DAY_MODE:
+			if(WichStripeIsOn != DAY_LED_STRIP)
+			{
+				WichStripeIsOn = DAY_LED_STRIP;
+				BlinkLed(STATUS_LED, 250, 3);
+				TurnPin(STATUS_LED, OFF);				
+				TurnAnalogPin(DAY_LED_STRIP, 100);
+				TurnAnalogPin(NIGHT_LED_STRIP, 0);
+			}	
+			SwitchLedStripe.restart();	
+			break;
+		case SWITCH_MODE:
+			if(SwitchLedStripe.hasPassed(90, true)) // 90s per lo switch
+			{
+				FadeLedStrips();
+			}
+			TurnPin(STATUS_LED, ON);					
+			break;
+		default:
+			break;
+	}
 }
