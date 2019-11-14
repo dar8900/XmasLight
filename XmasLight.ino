@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <Chrono.h>
 
+#define TEST_STRIPS	
+
 #define ON 			  true
 #define OFF			  false
 
@@ -16,6 +18,10 @@
 #define SWITCH_STRIP_TIME 	1
 
 #define PERCENT(Perc)		((Perc * 255)/100) // Questa è una macro per converire il fading in percentuale
+
+#ifdef TEST_STRIPS
+void TestLedStrip(void);
+#endif
 
 // Associo dei numeri alle varie modalità operative
 enum
@@ -108,6 +114,8 @@ void setup()
 
 void loop()
 {
+
+#ifndef TEST_STRIPS	
 	// Gestione del pulsante che consente il cambio di modalità
 	if(digitalRead(CHANGE_MODE) == HIGH)
 	{
@@ -115,6 +123,7 @@ void loop()
 			LedStripeMode++;
 		else
 			LedStripeMode = NIGHT_MODE;
+		delay(20);
 	}
 
 	// Macchina a stati per la gestione delle varie modalità 
@@ -152,4 +161,59 @@ void loop()
 		default:
 			break;
 	}
+#else
+	TestLedStrip();
+#endif
 }
+
+
+#ifdef TEST_STRIPS
+void TestLedStrip()
+{
+	// Gestione del pulsante che consente il cambio di modalità
+	if(digitalRead(CHANGE_MODE) == HIGH)
+	{
+		if(LedStripeMode < MAX_MODES - 1)
+			LedStripeMode++;
+		else
+			LedStripeMode = NIGHT_MODE;
+		TurnAnalogPin(NIGHT_LED_STRIP, 0);
+		TurnAnalogPin(DAY_LED_STRIP, 0);	
+		delay(20);	
+	}
+	switch(LedStripeMode)
+	{
+		case NIGHT_MODE:
+			BlinkLed(STATUS_LED, 500, 2);		
+			for(int i = 0; i < 101; i++)
+			{
+				TurnAnalogPin(NIGHT_LED_STRIP, i);
+				TurnAnalogPin(DAY_LED_STRIP, i);
+				delay(50);
+			}		
+			break;
+		case DAY_MODE:
+			BlinkLed(STATUS_LED, 500, 4);			
+			for(int i = 100; i >= 0; i--)
+			{
+				TurnAnalogPin(NIGHT_LED_STRIP, i);
+				TurnAnalogPin(DAY_LED_STRIP, i);
+				delay(50);
+			}			
+			break;
+		case SWITCH_MODE:
+			BlinkLed(STATUS_LED, 500, 6);			
+			TurnAnalogPin(NIGHT_LED_STRIP, 100);
+			TurnAnalogPin(DAY_LED_STRIP, 0);
+			for(int i = 0; i < 101; i++)
+			{
+				TurnAnalogPin(NIGHT_LED_STRIP, 100 - i);
+				TurnAnalogPin(DAY_LED_STRIP, i);
+				delay(50);
+			}				
+			break;
+		default:
+			break;
+	}
+}
+#endif
