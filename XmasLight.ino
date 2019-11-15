@@ -5,6 +5,8 @@
 
 #define TEST_STRIPS	
 
+#undef POT_FADING	
+
 #define ON 			  true
 #define OFF			  false
 
@@ -12,6 +14,7 @@
 #define DAY_LED_STRIP   	 1
 #define STATUS_LED 	 		 2
 #define CHANGE_MODE	 		 3
+#define POTENTIOMETER		 A2
 
 #define NO_STRIPE_ON  		10
 
@@ -35,6 +38,10 @@ enum
 Chrono SwitchLedStripe(Chrono::SECONDS);
 uint8_t WichStripeIsOn;
 uint8_t LedStripeMode = SWITCH_MODE;
+
+#ifdef POT_FADING
+int PotPercent = 0;
+#endif
 
 // Funzione per gestire il led di stato
 static void BlinkLed(int WichLed, int Delay, int Times)
@@ -88,6 +95,17 @@ static void FadeLedStrips()
 	WichStripeIsOn = LedToTurnOn;
 }
 
+#ifdef POT_FADING
+int ReadPotValue()
+{
+	int val = 0;
+	for(int i = 0; i < 30; i++)
+		val += analogRead(POTENTIOMETER);
+	val /= 30;
+	val = ((val * 255) / 1024);
+	return ((val * 100) / 255);
+}
+#endif
 
 void setup()
 {
@@ -134,8 +152,13 @@ void loop()
 			{
 				WichStripeIsOn = NIGHT_LED_STRIP;
 				BlinkLed(STATUS_LED, 250, 2);
-				TurnPin(STATUS_LED, OFF);				
+				TurnPin(STATUS_LED, OFF);
+			#ifdef POT_FADING
+				PotPercent = ReadPotValue();
+				TurnAnalogPin(NIGHT_LED_STRIP, PotPercent);
+			#else			
 				TurnAnalogPin(NIGHT_LED_STRIP, 100);
+			#endif
 				TurnAnalogPin(DAY_LED_STRIP, 0);
 			}
 			SwitchLedStripe.restart();
@@ -146,7 +169,12 @@ void loop()
 				WichStripeIsOn = DAY_LED_STRIP;
 				BlinkLed(STATUS_LED, 250, 3);
 				TurnPin(STATUS_LED, OFF);				
+			#ifdef POT_FADING
+				PotPercent = ReadPotValue();
+				TurnAnalogPin(DAY_LED_STRIP, PotPercent);
+			#else			
 				TurnAnalogPin(DAY_LED_STRIP, 100);
+			#endif
 				TurnAnalogPin(NIGHT_LED_STRIP, 0);
 			}	
 			SwitchLedStripe.restart();	
