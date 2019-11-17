@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Chrono.h>
 
-#define TEST_STRIPS	
+#undef TEST_STRIPS	
 
 #undef POT_FADING	
 
@@ -12,9 +12,12 @@
 
 #define NIGHT_LED_STRIP   	 0
 #define DAY_LED_STRIP   	 1
-#define STATUS_LED 	 		 2
+#define STATUS_LED 	 		 4
 #define CHANGE_MODE	 		 3
+
+#ifdef POT_FADING
 #define POTENTIOMETER		 A2
+#endif
 
 #define NO_STRIPE_ON  		10
 
@@ -41,6 +44,11 @@ uint8_t LedStripeMode = SWITCH_MODE;
 
 #ifdef POT_FADING
 int PotPercent = 0;
+#endif
+
+#ifndef TEST_STRIPS
+void CheckButton();
+int WichMode = 0;
 #endif
 
 // Funzione per gestire il led di stato
@@ -85,11 +93,17 @@ static void FadeLedStrips()
 		LedToTurnOff = DAY_LED_STRIP;
 	}
 	// Lo switch avviene in maniera soft ovvero per passsare da una
-	// modalita all'altra ci mette 2.5s (25ms * 100)
+	// modalita all'altra ci mette 5s (25ms * 100)
+	for(int i = 100; i >= 0; i--)
+	{
+		TurnAnalogPin(LedToTurnOff, i);
+		CheckButton();
+		delay(25);
+	}	
 	for(int i = 0; i < 101; i++)
 	{
 		TurnAnalogPin(LedToTurnOn, i);
-		TurnAnalogPin(LedToTurnOff, 100 - i);
+		CheckButton();
 		delay(25);
 	}
 	WichStripeIsOn = LedToTurnOn;
@@ -118,7 +132,8 @@ void setup()
 	pinMode(DAY_LED_STRIP, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
 	pinMode(CHANGE_MODE, INPUT);
-
+	
+#ifndef TEST_STRIPS	
 	// Inizializzo la modalità di avvio 
 	// default: modalità switch
 	TurnPin(STATUS_LED, ON);	
@@ -127,14 +142,21 @@ void setup()
 	SwitchLedStripe.restart();
 	WichStripeIsOn = NIGHT_LED_STRIP;
 	LedStripeMode = SWITCH_MODE;
+	WichMode = DAY_MODE;
+	TurnPin(STATUS_LED, OFF);
+#else
+	BlinkLed(STATUS_LED, 100, 5);
+	analogWrite(NIGHT_LED_STRIP, 0);	
+	analogWrite(DAY_LED_STRIP, 0);	
+#endif	
 }
 
 
-void loop()
-{
+#ifndef TEST_STRIPS
 
-#ifndef TEST_STRIPS	
-	// Gestione del pulsante che consente il cambio di modalità
+
+void CheckButton()
+{
 	if(digitalRead(CHANGE_MODE) == HIGH)
 	{
 		if(LedStripeMode < MAX_MODES - 1)
@@ -142,16 +164,36 @@ void loop()
 		else
 			LedStripeMode = NIGHT_MODE;
 		delay(20);
+		BlinkLed(STATUS_LED, 5, 1);
 	}
+}	
+#endif
 
+
+
+void loop()
+{
+
+#ifndef TEST_STRIPS	
+	// Gestione del pulsante che consente il cambio di modalità
+	// if(digitalRead(CHANGE_MODE) == HIGH)
+	// {
+	// 	if(LedStripeMode < MAX_MODES - 1)
+	// 		LedStripeMode++;
+	// 	else
+	// 		LedStripeMode = NIGHT_MODE;
+	// 	delay(20);
+	// }
+	CheckButton();
 	// Macchina a stati per la gestione delle varie modalità 
 	switch(LedStripeMode)
 	{
 		case NIGHT_MODE:
 			if(WichStripeIsOn != NIGHT_LED_STRIP)
 			{
+				WichMode = NIGHT_MODE;
 				WichStripeIsOn = NIGHT_LED_STRIP;
-				BlinkLed(STATUS_LED, 250, 2);
+				BlinkLed(STATUS_LED, 100, 2);
 				TurnPin(STATUS_LED, OFF);
 			#ifdef POT_FADING
 				PotPercent = ReadPotValue();
@@ -166,8 +208,9 @@ void loop()
 		case DAY_MODE:
 			if(WichStripeIsOn != DAY_LED_STRIP)
 			{
+				WichMode = DAY_MODE;
 				WichStripeIsOn = DAY_LED_STRIP;
-				BlinkLed(STATUS_LED, 250, 3);
+				BlinkLed(STATUS_LED, 100, 3);
 				TurnPin(STATUS_LED, OFF);				
 			#ifdef POT_FADING
 				PotPercent = ReadPotValue();
@@ -180,11 +223,16 @@ void loop()
 			SwitchLedStripe.restart();	
 			break;
 		case SWITCH_MODE:
+			if(WichMode != SWITCH_MODE)
+			{
+				WichMode = SWITCH_MODE;
+				BlinkLed(STATUS_LED, 100, 5);
+				TurnPin(STATUS_LED, OFF);
+			}
 			if(SwitchLedStripe.hasPassed(90, true)) // 90s per lo switch
 			{
 				FadeLedStrips();
-			}
-			TurnPin(STATUS_LED, ON);					
+			}					
 			break;
 		default:
 			break;
@@ -196,11 +244,13 @@ void loop()
 
 
 #ifdef TEST_STRIPS
-void TestLedStrip()
+
+void CheckButton()
 {
 	// Gestione del pulsante che consente il cambio di modalità
 	if(digitalRead(CHANGE_MODE) == HIGH)
 	{
+		
 		if(LedStripeMode < MAX_MODES - 1)
 			LedStripeMode++;
 		else
@@ -208,10 +258,30 @@ void TestLedStrip()
 		TurnAnalogPin(NIGHT_LED_STRIP, 0);
 		TurnAnalogPin(DAY_LED_STRIP, 0);	
 		delay(20);	
-	}
+		
+		//BlinkLed(STATUS_LED, 100, 5);
+	}	
+}
+
+
+void TestLedStrip()
+{
+
+	// for(int i = 0; i < 256; i++)
+	// {
+	// 	analogWrite(NIGHT_LED_STRIP, i);
+	// 	analogWrite(DAY_LED_STRIP, i);
+	// 	delay(100);
+	// }
+
+	// analogWrite(NIGHT_LED_STRIP, 0);
+	// analogWrite(DAY_LED_STRIP, 0);
+
+	
 	switch(LedStripeMode)
 	{
 		case NIGHT_MODE:
+			CheckButton();
 			BlinkLed(STATUS_LED, 500, 2);		
 			for(int i = 0; i < 101; i++)
 			{
@@ -221,6 +291,7 @@ void TestLedStrip()
 			}		
 			break;
 		case DAY_MODE:
+			CheckButton();
 			BlinkLed(STATUS_LED, 500, 4);			
 			for(int i = 100; i >= 0; i--)
 			{
@@ -230,6 +301,7 @@ void TestLedStrip()
 			}			
 			break;
 		case SWITCH_MODE:
+			CheckButton();
 			BlinkLed(STATUS_LED, 500, 6);			
 			TurnAnalogPin(NIGHT_LED_STRIP, 100);
 			TurnAnalogPin(DAY_LED_STRIP, 0);
@@ -243,5 +315,6 @@ void TestLedStrip()
 		default:
 			break;
 	}
+	
 }
 #endif
