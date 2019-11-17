@@ -210,7 +210,7 @@ void loop()
 				BlinkLed(STATUS_LED, 100, 5);
 				TurnPin(STATUS_LED, OFF);
 			}
-			if(SwitchLedStripe.hasPassed(5)) // 90s per lo switch
+			if(SwitchLedStripe.hasPassed(90)) // 90s per lo switch
 			{
 				SwitchLedStripe.stop();
 				FadeLedStrips();
