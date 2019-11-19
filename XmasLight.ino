@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <Chrono.h>
 
+#define FW_VERSION	 0.1
+
 #undef TEST_STRIPS	
 
 #undef POT_FADING	
