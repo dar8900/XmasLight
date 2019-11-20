@@ -5,9 +5,10 @@
 
 #define FW_VERSION	 0.1
 
-#undef TEST_STRIPS	
 
 #undef POT_FADING	
+
+#define BUTTON_DBG	
 
 #define ON 			  true
 #define OFF			  false
@@ -38,9 +39,10 @@ enum
 	MAX_MODES
 };
 
-Chrono SwitchLedStripe(Chrono::SECONDS);
+Chrono SwitchTimer(Chrono::SECONDS);
 uint8_t WichStripeIsOn;
 uint8_t LedStripeMode = SWITCH_MODE;
+uint8_t SwitchTime = 90;
 
 #ifdef POT_FADING
 int PotPercent = 0;
@@ -121,11 +123,64 @@ int ReadPotValue()
 }
 #endif
 
+
+#ifdef BUTTON_DBG
+void CheckButton()
+{
+	int Cnt = 0;
+	if(digitalRead(CHANGE_MODE) == HIGH)
+	{
+		delay(100);
+		// Per debug, se viene tenuto premuto 5s si cambia il tempo
+		// di switch da 90s a 5s e viceversa
+		while(digitalRead(CHANGE_MODE) == HIGH) 
+		{
+			if(Cnt == 250)
+			{
+				if(SwitchTime != 5)
+					SwitchTime = 5;
+				else
+					SwitchTime = 90;
+				break;
+			}
+			Cnt++;
+			delay(20);
+		}
+		if(Cnt < 50)
+		{
+			if(LedStripeMode < MAX_MODES - 1)
+				LedStripeMode++;
+			else
+				LedStripeMode = NIGHT_MODE;
+			BlinkLed(STATUS_LED, 5, 1);
+		}
+		else
+		{
+			BlinkLed(STATUS_LED, 5, 20);
+		}
+	}
+}	
+#else
+void CheckButton()
+{
+	if(digitalRead(CHANGE_MODE) == HIGH)
+	{
+		if(LedStripeMode < MAX_MODES - 1)
+			LedStripeMode++;
+		else
+			LedStripeMode = NIGHT_MODE;
+		BlinkLed(STATUS_LED, 5, 1);
+		delay(20);
+	}
+}
+#endif
+
+
 void setup()
 {
 	// Inizializzo variabile per il cronometro
-	SwitchLedStripe.restart();
-	SwitchLedStripe.stop();
+	SwitchTimer.restart();
+	SwitchTimer.stop();
 
 	// Inizializzo i vari pin che mi serviranno
 	pinMode(NIGHT_LED_STRIP, OUTPUT);
@@ -135,33 +190,18 @@ void setup()
 	
 	// Inizializzo la modalità di avvio 
 	// default: modalità switch
-	BlinkLed(STATUS_LED, 50, 10);
+	delay(1000);
+	BlinkLed(STATUS_LED, 1000, 1);
+	BlinkLed(STATUS_LED, 25, 10);
 	TurnAnalogPin(NIGHT_LED_STRIP, 0);	
 	TurnAnalogPin(DAY_LED_STRIP, 0);	
-	SwitchLedStripe.restart();
+	SwitchTimer.restart();
 	WichStripeIsOn = NO_STRIPE_ON;
 	LedStripeMode = NIGHT_MODE;
 	WichMode = SWITCH_MODE;
 	TurnPin(STATUS_LED, OFF);
 
 }
-
-
-
-
-
-void CheckButton()
-{
-	if(digitalRead(CHANGE_MODE) == HIGH)
-	{
-		if(LedStripeMode < MAX_MODES - 1)
-			LedStripeMode++;
-		else
-			LedStripeMode = NIGHT_MODE;
-		delay(20);
-		BlinkLed(STATUS_LED, 5, 1);
-	}
-}	
 
 
 
@@ -186,7 +226,7 @@ void loop()
 			#endif
 				TurnAnalogPin(DAY_LED_STRIP, 0);
 			}
-			SwitchLedStripe.restart();
+			SwitchTimer.restart();
 			break;
 		case DAY_MODE:
 			if(WichStripeIsOn != DAY_LED_STRIP)
@@ -203,7 +243,7 @@ void loop()
 			#endif
 				TurnAnalogPin(NIGHT_LED_STRIP, 0);
 			}	
-			SwitchLedStripe.restart();	
+			SwitchTimer.restart();	
 			break;
 		case SWITCH_MODE:
 			if(WichMode != SWITCH_MODE)
@@ -212,11 +252,11 @@ void loop()
 				BlinkLed(STATUS_LED, 100, 5);
 				TurnPin(STATUS_LED, OFF);
 			}
-			if(SwitchLedStripe.hasPassed(90)) // 90s per lo switch
+			if(SwitchTimer.hasPassed(SwitchTime)) // 90s per lo switch
 			{
-				SwitchLedStripe.stop();
+				SwitchTimer.stop();
 				FadeLedStrips();
-				SwitchLedStripe.restart();
+				SwitchTimer.restart();
 			}					
 			break;
 		default:
