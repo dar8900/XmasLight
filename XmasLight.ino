@@ -17,12 +17,12 @@
 #define NIGHT_LED_STRIP   	 0
 #define DAY_LED_STRIP   	 1
 #define STATUS_LED 	 		 4
-#define CHANGE_MODE	 		 3
+#define CHANGE_MODE	 		 2
 
 #define LED_MODE_ADDR		 0
 
 #ifdef POT_FADING
-#define POTENTIOMETER		 1
+#define POTENTIOMETER		 A3
 #endif
 
 #define NO_STRIPE_ON  		10
@@ -30,7 +30,10 @@
 #define SWITCH_STRIP_TIME 	1
 
 #define MIN_BRIGHTNESS	      0
-#define MAX_BRIGHTNESS		255
+#define MAX_BRIGHTNESS		250
+
+#define FADING_DELAY                    (10 * 1000)
+#define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / brightness))
 
 // #define PERCENT(Perc)		(int)((Perc * 255)/MAX_BRIGHTNESS) // Questa è una macro per converire il fading in percentuale
 
@@ -48,7 +51,7 @@ enum
 Chrono SwitchTimer(Chrono::SECONDS);
 uint8_t WichStripeIsOn;
 uint8_t LedStripeMode = SWITCH_MODE;
-uint8_t SwitchTime = 5;//90;
+uint8_t SwitchTime = 90;
 int 	Brightness = MAX_BRIGHTNESS;
 int 	OldBrightness = MAX_BRIGHTNESS;
 
@@ -86,7 +89,7 @@ static void TurnPin(int WichLed, bool Status)
 // Funzione per gestire le uscite "analogiche" PWM
 static void TurnAnalogPin(int WichLed, int AnalogBright)
 {
-	if(AnalogBright >= 0 && AnalogBright <= MAX_BRIGHTNESS)
+	if(AnalogBright >= MIN_BRIGHTNESS && AnalogBright <= MAX_BRIGHTNESS)
 		analogWrite(WichLed, AnalogBright);
 	else
 		analogWrite(WichLed, MAX_BRIGHTNESS);
@@ -107,20 +110,25 @@ static void FadeLedStrips()
 		LedToTurnOff = DAY_LED_STRIP;
 	}
 	TurnPin(STATUS_LED, ON);
-	// Lo switch avviene in maniera soft ovvero per passsare da una
-	// modalita all'altra ci mette 10s (25ms * 100)
-	for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
+	if(Brightness > MIN_BRIGHTNESS)
 	{
-		TurnAnalogPin(LedToTurnOff, i);
-		// CheckButton();
-		delay(100);
-	}	
-	for(int i = MIN_BRIGHTNESS; i <= Brightness; i++)
-	{
-		TurnAnalogPin(LedToTurnOn, i);
-		// CheckButton();
-		delay(100);
+		// Lo switch avviene in maniera soft ovvero per passsare da una
+		// modalita all'altra ci mette 10s (25ms * 100)
+		for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
+		{
+			TurnAnalogPin(LedToTurnOff, i);
+			// CheckButton();
+			CALC_FADING_DELAY(Brightness);
+		}	
+		for(int i = MIN_BRIGHTNESS; i <= Brightness; i++)
+		{
+			TurnAnalogPin(LedToTurnOn, i);
+			// CheckButton();
+			CALC_FADING_DELAY(Brightness);
+		}
 	}
+	else
+		delay(1000);
 	TurnPin(STATUS_LED, OFF);
 	WichStripeIsOn = LedToTurnOn;
 }
@@ -130,15 +138,52 @@ void ReadPotValue()
 {
 	int val = 0;
 	int sample = 10;
-	// for(int i = 0; i < sample; i++)
-	// 	val += analogRead(POTENTIOMETER);
-	// val /= sample;
-	val = analogRead(POTENTIOMETER);
-	val = ((val * 255) / 1023);
-	// Brightness = ((val * MAX_BRIGHTNESS) / 255);
-	Brightness = val;
-	if(Brightness > 255)
-		Brightness = 255;
+	int milleIncrement = 51, pwmincrement = 12;
+	for(int i = 0; i < sample; i++)
+		val += analogRead(POTENTIOMETER);
+	val /= sample;
+	if(val >= 0 && val < milleIncrement)
+		Brightness = pwmincrement;
+	else if(val >= milleIncrement && val < milleIncrement * 2)
+		Brightness = 0;
+	else if(val >= milleIncrement * 2 && val < milleIncrement * 3)
+		Brightness = pwmincrement * 2;
+	else if(val >= milleIncrement * 3 && val < milleIncrement * 4)
+		Brightness = pwmincrement * 4;
+	else if(val >= milleIncrement * 4 && val < milleIncrement * 5)
+		Brightness = pwmincrement * 5;
+	else if(val >= milleIncrement * 5 && val < milleIncrement * 6)
+		Brightness = pwmincrement * 6;
+	else if(val >= milleIncrement * 6 && val < milleIncrement * 7)
+		Brightness = pwmincrement * 7;
+	else if(val >= milleIncrement * 7 && val < milleIncrement * 8)
+		Brightness = pwmincrement * 8;
+	else if(val >= milleIncrement * 8 && val < milleIncrement * 9)
+		Brightness = pwmincrement * 9;
+	else if(val >= milleIncrement * 9 && val < milleIncrement * 10)
+		Brightness = pwmincrement * 10;
+	else if(val >= milleIncrement * 10 && val < milleIncrement * 11)
+		Brightness = pwmincrement * 11;
+	else if(val >= milleIncrement * 11 && val < milleIncrement * 12)
+		Brightness = pwmincrement * 12;
+	else if(val >= milleIncrement * 12 && val < milleIncrement * 13)
+		Brightness = pwmincrement * 13;	
+	else if(val >= milleIncrement * 13 && val < milleIncrement * 14)
+		Brightness = pwmincrement * 14;
+	else if(val >= milleIncrement * 14 && val < milleIncrement * 15)
+		Brightness = pwmincrement * 15;
+	else if(val >= milleIncrement * 15 && val < milleIncrement * 16)
+		Brightness = pwmincrement * 16;
+	else if(val >= milleIncrement * 16 && val < milleIncrement * 17)
+		Brightness = pwmincrement * 17;
+	else if(val >= milleIncrement * 17 && val < milleIncrement * 18)
+		Brightness = pwmincrement * 18;
+	else if(val >= milleIncrement * 18 && val < milleIncrement * 19)
+		Brightness = pwmincrement * 19;
+	else if(val >= milleIncrement * 19 && val < milleIncrement * 20)
+		Brightness = pwmincrement * 21;
+	// else if(val >= 850 && val < 1023)
+	// 	Brightness = pwmincrement * 21;	
 	return;
 }
 #endif
@@ -172,7 +217,7 @@ void CheckButton()
 				LedStripeMode++;
 			else
 				LedStripeMode = NIGHT_MODE;
-			EEPROM.update(0, LedStripeMode);
+			EEPROM.update(LED_MODE_ADDR, LedStripeMode);
 			BlinkLed(STATUS_LED, 5, 1);
 		}
 		else
@@ -190,7 +235,7 @@ void CheckButton()
 			LedStripeMode++;
 		else
 			LedStripeMode = NIGHT_MODE;
-		EEPROM.update(0, LedStripeMode);
+		EEPROM.update(LED_MODE_ADDR, LedStripeMode);
 		BlinkLed(STATUS_LED, 5, 1);
 		delay(20);
 	}
@@ -241,7 +286,7 @@ void setup()
 	TurnAnalogPin(DAY_LED_STRIP, Brightness);	
 	SwitchTimer.restart();
 	WichStripeIsOn = NO_STRIPE_ON;
-	LedStripeMode = EEPROM.read(0);
+	LedStripeMode = EEPROM.read(LED_MODE_ADDR);
 	WichMode = MAX_MODES;
 	TurnPin(STATUS_LED, OFF);
 	Brightness = MAX_BRIGHTNESS;
