@@ -9,7 +9,7 @@
 
 #define POT_FADING	
 
-#define BUTTON_DBG	
+#undef BUTTON_DBG	
 
 #define ON 			  true
 #define OFF			  false
@@ -22,7 +22,7 @@
 #define LED_MODE_ADDR		 0
 
 #ifdef POT_FADING
-#define POTENTIOMETER		 A1
+#define POTENTIOMETER		 1
 #endif
 
 #define NO_STRIPE_ON  		10
@@ -30,9 +30,9 @@
 #define SWITCH_STRIP_TIME 	1
 
 #define MIN_BRIGHTNESS	      0
-#define MAX_BRIGHTNESS		100
+#define MAX_BRIGHTNESS		255
 
-#define PERCENT(Perc)		((Perc * 255)/MAX_BRIGHTNESS) // Questa è una macro per converire il fading in percentuale
+// #define PERCENT(Perc)		(int)((Perc * 255)/MAX_BRIGHTNESS) // Questa è una macro per converire il fading in percentuale
 
 
 
@@ -48,8 +48,9 @@ enum
 Chrono SwitchTimer(Chrono::SECONDS);
 uint8_t WichStripeIsOn;
 uint8_t LedStripeMode = SWITCH_MODE;
-uint8_t SwitchTime = 90;
+uint8_t SwitchTime = 5;//90;
 int 	Brightness = MAX_BRIGHTNESS;
+int 	OldBrightness = MAX_BRIGHTNESS;
 
 
 void CheckButton(void);
@@ -83,9 +84,12 @@ static void TurnPin(int WichLed, bool Status)
 }
 
 // Funzione per gestire le uscite "analogiche" PWM
-static void TurnAnalogPin(int WichLed, int Percent)
+static void TurnAnalogPin(int WichLed, int AnalogBright)
 {
-	analogWrite(WichLed, PERCENT(Percent));
+	if(AnalogBright >= 0 && AnalogBright <= MAX_BRIGHTNESS)
+		analogWrite(WichLed, AnalogBright);
+	else
+		analogWrite(WichLed, MAX_BRIGHTNESS);
 }
  
 // Funzione per la gestione dello switch tra giorno e notte
@@ -125,11 +129,16 @@ static void FadeLedStrips()
 void ReadPotValue()
 {
 	int val = 0;
-	for(int i = 0; i < 30; i++)
-		val += analogRead(POTENTIOMETER);
-	val /= 30;
-	val = ((val * 255) / 1024);
-	Brightness = ((val * MAX_BRIGHTNESS) / 255);
+	int sample = 10;
+	// for(int i = 0; i < sample; i++)
+	// 	val += analogRead(POTENTIOMETER);
+	// val /= sample;
+	val = analogRead(POTENTIOMETER);
+	val = ((val * 255) / 1023);
+	// Brightness = ((val * MAX_BRIGHTNESS) / 255);
+	Brightness = val;
+	if(Brightness > 255)
+		Brightness = 255;
 	return;
 }
 #endif
@@ -207,6 +216,8 @@ void EepromInit()
 			delay(500);
 		}
 	}
+	else
+		BlinkLed(STATUS_LED, 1000, 3);
 
 }
 
@@ -225,7 +236,6 @@ void setup()
 	
 	delay(1000);
 	Brightness = MIN_BRIGHTNESS;
-	BlinkLed(STATUS_LED, 1000, 1);
 	BlinkLed(STATUS_LED, 25, 10);
 	TurnAnalogPin(NIGHT_LED_STRIP, Brightness);	
 	TurnAnalogPin(DAY_LED_STRIP, Brightness);	
@@ -234,7 +244,7 @@ void setup()
 	LedStripeMode = EEPROM.read(0);
 	WichMode = MAX_MODES;
 	TurnPin(STATUS_LED, OFF);
-	Brightness = 100;
+	Brightness = MAX_BRIGHTNESS;
 }
 
 
@@ -259,6 +269,14 @@ void loop()
 			#endif
 				TurnAnalogPin(DAY_LED_STRIP, 0);
 			}
+			#ifdef POT_FADING
+			if(OldBrightness != Brightness)
+			{
+				TurnAnalogPin(NIGHT_LED_STRIP, Brightness);
+				OldBrightness = Brightness;
+			}
+			#endif
+
 			SwitchTimer.restart();
 			break;
 		case DAY_MODE:
@@ -275,6 +293,13 @@ void loop()
 			#endif
 				TurnAnalogPin(NIGHT_LED_STRIP, 0);
 			}	
+			#ifdef POT_FADING
+			if(OldBrightness != Brightness)
+			{
+				TurnAnalogPin(DAY_LED_STRIP, Brightness);
+				OldBrightness = Brightness;
+			}			
+			#endif
 			SwitchTimer.restart();	
 			break;
 		case SWITCH_MODE:
@@ -289,7 +314,14 @@ void loop()
 				SwitchTimer.stop();
 				FadeLedStrips();
 				SwitchTimer.restart();
-			}					
+			}	
+			#ifdef POT_FADING
+			if(OldBrightness != Brightness)
+			{
+				TurnAnalogPin(DAY_LED_STRIP, Brightness);
+				OldBrightness = Brightness;
+			}			
+			#endif							
 			break;
 		default:
 			break;
