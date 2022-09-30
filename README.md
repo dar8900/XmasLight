@@ -1,4 +1,4 @@
-# Creazione di un gestore di srisce a led per luci natalizie
+# Creazione di un gestore di strisce a led per luci natalizie
 
 ## Specifiche al 6/11/19
 - Accensione sola striscia giorno
