@@ -14,7 +14,7 @@ class LedStripe
 	}stripe_status;
 
 	private:
-		const uint16_t ENGINE_CYCLE = 10; // in ms
+		const uint16_t ENGINE_CYCLE = 50; // in ms
 		int8_t _pin = -1;
 		uint16_t _brightnessTarget = 0;
 		uint16_t _actualBrightness = 0;
