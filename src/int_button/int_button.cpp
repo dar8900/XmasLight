@@ -12,7 +12,7 @@ void Trigger()
 }
 
 
-INT_BUTTON::INT_BUTTON(int8_t IntPin, bool ActiveLow) : 
+IntButton::IntButton(int8_t IntPin, bool ActiveLow) : 
 						_intPin(IntPin),
 						_activeLow(ActiveLow)
 {
@@ -30,7 +30,7 @@ INT_BUTTON::INT_BUTTON(int8_t IntPin, bool ActiveLow) :
 }
 
 
-bool INT_BUTTON::isTriggered()
+bool IntButton::isTriggered()
 {
 	_intReceived = InterruptTriggered;
 	if(_intReceived)

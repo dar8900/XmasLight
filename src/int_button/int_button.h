@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-class INT_BUTTON
+class IntButton
 {
 	private:
 		int8_t _intPin = -1;
@@ -11,7 +11,7 @@ class INT_BUTTON
 		bool _intReceived = false;
 
 	public:
-		INT_BUTTON(int8_t IntPin, bool ActiveLow = false);
+		IntButton(int8_t IntPin, bool ActiveLow = false);
 		bool isTriggered();
 
 };
