@@ -1,0 +1,5 @@
+#include "main_app.h"
+#include "../int_button/int_button.h"
+#include "../led_stripes/led_stripes.h"
+#include "../potentiometer/potentiometer.h"
+#include "../status_led/status_led.h"
