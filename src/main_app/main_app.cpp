@@ -1,11 +1,7 @@
 #include "main_app.h"
-#include "../int_button/int_button.h"
-#include "../led_stripes/led_stripes.h"
-#include "../potentiometer/potentiometer.h"
-#include "../status_led/status_led.h"
 
 #define MAX_BRIGHTNESS_PERC             100
-#define DIMMING_TIME                    20 // in s
+#define DIMMING_TIME                    20000 // in ms
 #define POT_SAMPLE                      50
 #define POT_SAMPLING_RATE               100 // in ms
 #define SWITCH_LEDS_TIME                2000 // in ms
@@ -13,18 +9,40 @@
 
 void MainApp::_checkChangeMode()
 {
-    bool SwitchMode = false;
-    SwitchMode = _modeSwitch->isTriggered();
-    if(SwitchMode)
+    ModeButton::button_mode SwitchMode = ModeButton::button_mode::no_press;
+    SwitchMode = _modeSwitch->getButtonMode();
+    if(SwitchMode == ModeButton::button_mode::long_press)
     {
         if(_lightsMode == auto_mode)
         {
             _lightsMode = manual_mode;
+            _manualLedSwitch = day_led;
             _switchDayNightTimer.stop();
+            _nightLedStripe->setDimmingTime(NO_DIMMING);
+            _dayLedStripe->setDimmingTime(NO_DIMMING);
         }
         else
         {
             _lightsMode = auto_mode;
+            _nightLedStripe->setDimmingTime(DIMMING_TIME);
+            _dayLedStripe->setDimmingTime(DIMMING_TIME);
+            _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
+            _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
+        }
+    }
+    else if(SwitchMode == ModeButton::button_mode::short_press && _lightsMode == manual_mode)
+    {
+        switch (_manualLedSwitch)
+        {
+        case day_led:
+            _manualLedSwitch = night_led;
+            break;
+        case night_led:
+            _manualLedSwitch = day_led;
+            break;
+        default:
+            _manualLedSwitch = day_led;
+            break;
         }
     }
 }
@@ -78,16 +96,55 @@ void MainApp::_mangeLedStripesSwitching()
     }
     else
     {
-        
+        switch (_manualLedSwitch)
+        {
+        case day_led:
+            _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
+            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            _wichStripeWasOn = day_led;
+            break;
+        case night_led:
+            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+            _wichStripeWasOn = night_led;
+            break;
+        default:
+            break;
+        }       
     }
 }
 
 
 
+void MainApp::_collectPotBrightness()
+{
+    uint16_t PotAnalogVal = 0;
+    PotAnalogVal = _pot->getAnalogVal();
+    _potManualModeBrightness = (PotAnalogVal * MAX_BRIGHTNESS_PERC) / MAX_ANALOG_VAL;
+    if(_potManualModeBrightness > MAX_BRIGHTNESS_PERC)
+    {
+        _potManualModeBrightness = MAX_BRIGHTNESS_PERC;
+    }
+
+}
+
+void MainApp::_execEngines()
+{
+    if(_lightsMode == manual_mode)
+    {
+        _collectPotBrightness();
+        _dayLedStripe->setBrightness(_potManualModeBrightness);
+        _nightLedStripe->setBrightness(_potManualModeBrightness);
+    }
+    _dayLedStripe->ledStripeEngine();
+    _nightLedStripe->ledStripeEngine();
+    _pot->analogReadEngine();
+    _statusLed->ledEngine();
+    _modeSwitch->modeButtonEngine();
+}
 
 
-
-MainApp::MainApp() : _modeSwitch(new IntButton(SWITCH_MODE)),
+MainApp::MainApp() : _modeSwitch(new ModeButton(SWITCH_MODE)),
                      _dayLedStripe(new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC)),
                      _nightLedStripe(new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC)),
                      _pot(new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE)),
@@ -115,9 +172,5 @@ void MainApp::runApp()
 {
     _checkChangeMode();
     _mangeLedStripesSwitching();
-
-    _dayLedStripe->ledStripeEngine();
-    _nightLedStripe->ledStripeEngine();
-    _pot->analogReadEngine();
-    _statusLed->ledEngine();
+    _execEngines();
 }
