@@ -1,4 +1,5 @@
 #include "main_app.h"
+#include "../SerialDebug/serial_debug.h"
 
 #define MAX_BRIGHTNESS_PERC             100
 #define DIMMING_TIME                    20000 // in ms
@@ -6,6 +7,7 @@
 #define POT_SAMPLING_RATE               100 // in ms
 #define SWITCH_LEDS_TIME                2000 // in ms
 
+static SerialDebug Debug(SerialDebug::serial_used::ard_1_serial, SerialDebug::baudrate::baud_115200, false);
 
 void MainApp::_checkChangeMode()
 {
@@ -170,6 +172,10 @@ void MainApp::setupApp()
     _wichStripeWasOn = all_off;
     _manualLedSwitch = all_off;
     _potManualModeBrightness = 0;    
+    Debug.setLogStatus(true);
+    Debug.setTimePrint(true);
+    Debug.setDebugLevel(SerialDebug::debug_level::all);
+    Debug.logInfo("Application started\n");
 }
 
 void MainApp::runApp()
