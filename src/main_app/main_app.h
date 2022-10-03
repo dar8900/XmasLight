@@ -9,6 +9,8 @@
 #include "../status_led/status_led.h"
 #include "../TimerLib/Timer.hpp"
 
+#define FW_VERSION      0.4
+
 class MainApp
 {
     private:
