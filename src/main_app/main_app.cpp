@@ -165,7 +165,11 @@ MainApp::~MainApp()
 
 void MainApp::setupApp()
 {
-    
+    _lightsMode = auto_mode;
+    _oldLightMode = auto_mode;
+    _wichStripeWasOn = all_off;
+    _manualLedSwitch = all_off;
+    _potManualModeBrightness = 0;    
 }
 
 void MainApp::runApp()
