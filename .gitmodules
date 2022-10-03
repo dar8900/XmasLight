@@ -1,3 +1,6 @@
 [submodule "src/TimerLib"]
 	path = src/TimerLib
 	url = git@github.com:dar8900/TimerLib.git
+[submodule "src/SerialDebug"]
+	path = src/SerialDebug
+	url = git@github.com:dar8900/ArduinoSerialLog.git
