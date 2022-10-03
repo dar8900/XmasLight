@@ -1,12 +1,13 @@
 #include "led_stripes.h"
 
+#define PERC_2_ANALOGWRITE(Perc)		((Perc * 255) / 100)
 
-LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint16_t MaxBrightness) : 
+LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc) : 
 																				_pin(Pin)
 {
 	pinMode(_pin, OUTPUT);
 	setDimmingTime(DimmingTime);
-	setBrightness(MaxBrightness);
+	setBrightness(MaxBrightnessPerc);
 	_engineTimer.start(ENGINE_CYCLE);
 }
 
@@ -26,15 +27,21 @@ void LedStripe::setStatus(stripe_status NewStatus)
 	}
 }
 
-void LedStripe::setBrightness(uint16_t NewBrightness)
+LedStripe::stripe_status LedStripe::getStatus()
 {
-	if(NewBrightness != _brightnessTarget && NewBrightness <= MAX_BRIGHTNESS)
+	return _actualStatus;
+}
+
+void LedStripe::setBrightness(uint8_t NewBrightnessPerc)
+{
+	uint16_t AnalogBright = PERC_2_ANALOGWRITE(NewBrightnessPerc);
+	if(AnalogBright != _brightnessTarget && NewBrightnessPerc <= MAX_BRIGHTNESS)
 	{
-		_brightnessTarget = NewBrightness;
+		_brightnessTarget = AnalogBright;
 	}
 }
 
-void LedStripe::runEngine()
+void LedStripe::ledStripeEngine()
 {
 	if(_engineTimer.isOver(true))
 	{

@@ -7,11 +7,11 @@
 class LedStripe
 {
 	public:
-	typedef enum
-	{
-		off_status = 0,
-		on_status
-	}stripe_status;
+		typedef enum
+		{
+			off_status = 0,
+			on_status
+		}stripe_status;
 
 	private:
 		const uint16_t ENGINE_CYCLE = 50; // in ms
@@ -24,9 +24,9 @@ class LedStripe
 		Timer _engineTimer;
 
 	public:
-		const uint16_t MAX_BRIGHTNESS = 1023; // Massima luminosità
+		const uint8_t MAX_BRIGHTNESS = 100; // Massima luminosità percentuale
 
-		LedStripe(int8_t Pin, uint16_t DimmingTime, uint16_t MaxBrightness);
+		LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPercent);
 		/**
 		 * @brief Imposta il tempo di dimming tra accensione e spegnimento (in ms)
 		 * 
@@ -42,17 +42,24 @@ class LedStripe
 		void setStatus(stripe_status NewStatus);
 
 		/**
-		 * @brief Imposta la massima luminostà da raggiungere
+		 * @brief Restituisce lo stato attuale della striscia
 		 * 
-		 * @param uint16_t NewBrightness 
+		 * @return stripe_status ActualStatus 
 		 */
-		void setBrightness(uint16_t NewBrightness);
+		stripe_status getStatus();
+
+		/**
+		 * @brief Imposta la massima luminostà da raggiungere in percentuale
+		 * 
+		 * @param uint8_t NewBrightness 
+		 */
+		void setBrightness(uint8_t NewBrightnessPercent);
 
 		/**
 		 * @brief Esegue il motore per la gestione del dimming e del cambio stato
 		 * 
 		 */
-		void runEngine();
+		void ledStripeEngine();
 
 };
 
