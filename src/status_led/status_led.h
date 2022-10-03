@@ -1,4 +1,4 @@
-#ifndef STATUS_LED_h
+#ifndef STATUS_LED_H
 #define STATUS_LED_H
 #include <Arduino.h>
 #include <stdint.h>
@@ -20,8 +20,8 @@ class StatusLed
 		int8_t _pin = -1;
 		uint8_t _cnt = 0;
 		bool _ledStatus = false;
-		led_mode _actualStatus = off;
-		led_mode _oldStatus = off;
+		led_mode _actualStatus = off_mode;
+		led_mode _oldStatus = off_mode;
 		Timer _ledSwichTimer;
 		void _setLedDigital(bool Status);
 		void _rapidBlink();

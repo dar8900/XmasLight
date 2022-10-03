@@ -74,7 +74,6 @@ void StatusLed::_offMode()
 StatusLed::StatusLed(int8_t Pin) : _pin(Pin)
 {
 	pinMode(_pin, OUTPUT);
-	_ledEngineTimer.start(ENGINE_CYCLE);
 }
 
 void StatusLed::setStatus(led_mode NewStatus)
