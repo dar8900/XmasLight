@@ -1,8 +1,5 @@
 #include "potentiometer.h"
 
-#define MAX_VOLTAGE_VAL         5.0
-#define MAX_ANALOG_VAL          1023
-
 uint16_t Potenziometer::_readAnalogPort()
 {
     _analogInstVal = analogRead(_pin);

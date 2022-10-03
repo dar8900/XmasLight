@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "../TimerLib/Timer.hpp"
 
+#define MAX_VOLTAGE_VAL         5.0
+#define MAX_ANALOG_VAL          1023
+
 class Potenziometer
 {
 	public:
