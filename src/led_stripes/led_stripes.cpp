@@ -17,6 +17,10 @@ void LedStripe::setDimmingTime(uint16_t Time)
 	if(Time != _dimmingTime && Time >= MAX_ANALOG_WRITE_VAL)
 	{
 		_dimmingTime = Time;
+		if(_dimmingTime == NO_DIMMING)
+		{
+			_engineCycle = _DIMMING_CYCLE_DFTL;
+		}
 		_engineCycle = _dimmingTime / MAX_ANALOG_WRITE_VAL;
 	}
 }
@@ -47,7 +51,7 @@ void LedStripe::ledStripeEngine()
 {
 	if(_engineTimer.isOver(true, _engineCycle))
 	{
-		if(_dimmingTime == 0)
+		if(_dimmingTime == NO_DIMMING)
 		{
 			if(_actualStatus != _targetStatus)
 			{
