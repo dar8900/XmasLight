@@ -22,6 +22,7 @@ void MainApp::_checkChangeMode()
             _switchDayNightTimer.stop();
             _nightLedStripe->setDimmingTime(NO_DIMMING);
             _dayLedStripe->setDimmingTime(NO_DIMMING);
+            Debug.logInfo("Switch in modalita manuale");
         }
         else
         {
@@ -30,6 +31,7 @@ void MainApp::_checkChangeMode()
             _dayLedStripe->setDimmingTime(DIMMING_TIME);
             _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
             _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
+            Debug.logInfo("Switch in modalita automatica");
         }
     }
     else if(SwitchMode == ModeButton::button_mode::short_press && _lightsMode == manual_mode)
@@ -46,6 +48,7 @@ void MainApp::_checkChangeMode()
             _manualLedSwitch = day_led;
             break;
         }
+        Debug.logInfo("Modifica manualmente la modalita dei led");
     }
 }
 
