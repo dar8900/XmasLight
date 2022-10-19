@@ -21,7 +21,10 @@ void LedStripe::setDimmingTime(uint16_t Time)
 		{
 			_engineCycle = _DIMMING_CYCLE_DFTL;
 		}
-		_engineCycle = _dimmingTime / MAX_ANALOG_WRITE_VAL;
+		else
+		{
+			_engineCycle = _dimmingTime / MAX_ANALOG_WRITE_VAL;
+		}
 	}
 }
 
