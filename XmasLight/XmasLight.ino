@@ -32,7 +32,7 @@
 #define MIN_BRIGHTNESS	      0
 #define MAX_BRIGHTNESS		250
 
-#define FADING_DELAY                    (10 * 1000)
+#define FADING_DELAY                    (20 * 1000)
 #define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / brightness))
 
 // #define PERCENT(Perc)		(int)((Perc * 255)/MAX_BRIGHTNESS) // Questa è una macro per converire il fading in percentuale
@@ -114,13 +114,14 @@ static void FadeLedStrips()
 	if(Brightness > MIN_BRIGHTNESS)
 	{
 		// Lo switch avviene in maniera soft ovvero per passsare da una
-		// modalita all'altra ci mette 10s (25ms * 100)
+		// modalita all'altra ci mette FADING_DELAY (25ms * 100)
 		for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
 		{
 			TurnAnalogPin(LedToTurnOff, i);
 			// CheckButton();
 			CALC_FADING_DELAY(Brightness);
-		}	
+		}
+		delay(2000);
 		for(int i = MIN_BRIGHTNESS; i <= Brightness; i++)
 		{
 			TurnAnalogPin(LedToTurnOn, i);
