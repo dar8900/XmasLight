@@ -24,7 +24,6 @@ class StatusLed
 		led_mode _oldStatus = off_mode;
 		Timer _ledSwichTimer;
 		void _setLedDigital(bool Status);
-		void _rapidBlink();
 		void _bootMode();
 		void _errorMode();
 		void _manualSwMode();
@@ -33,6 +32,7 @@ class StatusLed
 
 	public:
 		StatusLed(int8_t Pin);
+		void rapidBlink(uint16_t Delay = 25);
 		void setStatus(led_mode NewStatus);
 		void ledEngine();
 

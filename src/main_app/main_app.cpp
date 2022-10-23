@@ -7,7 +7,7 @@
 #define POT_SAMPLING_RATE               100 // in ms
 #define SWITCH_LEDS_TIME                2000 // in ms
 
-static SerialDebug Debug(SerialDebug::serial_used::ard_1_serial, SerialDebug::baudrate::baud_115200, false);
+static SerialDebug Debug(SerialDebug::baudrate::baud_9600, true);
 
 void MainApp::_checkChangeMode()
 {
@@ -149,13 +149,13 @@ void MainApp::_execEngines()
 }
 
 
-MainApp::MainApp() : _modeSwitch(new ModeButton(SWITCH_MODE)),
-                     _dayLedStripe(new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC)),
-                     _nightLedStripe(new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC)),
-                     _pot(new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE)),
-                     _statusLed(new StatusLed(STATUS_LED))
+MainApp::MainApp()
 {
-
+    _modeSwitch = new ModeButton(SWITCH_MODE);
+    _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
+    _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
+    _pot = new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE);
+    _statusLed = new StatusLed(STATUS_LED);
 }
 
 MainApp::~MainApp()
@@ -170,20 +170,23 @@ MainApp::~MainApp()
 
 void MainApp::setupApp()
 {
-    _lightsMode = auto_mode;
-    _oldLightMode = auto_mode;
-    _wichStripeWasOn = all_off;
-    _manualLedSwitch = all_off;
-    _potManualModeBrightness = 0;    
-    Debug.setLogStatus(true);
-    Debug.setTimePrint(true);
-    Debug.setDebugLevel(SerialDebug::debug_level::all);
-    Debug.logInfo("Application started\n");
+	_lightsMode = auto_mode;
+	_oldLightMode = auto_mode;
+	_wichStripeWasOn = all_off;
+	_manualLedSwitch = all_off;
+	_potManualModeBrightness = 0; 
+    Debug.init();
+	Debug.setLogStatus(true);
+	Debug.setTimePrint(false);
+	Debug.setDebugLevel(SerialDebug::debug_level::all);
+	Debug.logInfo("Application started");
+    for(int i = 0; i < 5; i++)
+        _statusLed->rapidBlink(250);
 }
 
 void MainApp::runApp()
 {
-    _checkChangeMode();
-    _mangeLedStripesSwitching();
-    _execEngines();
+	_checkChangeMode();
+	_mangeLedStripesSwitching();
+	_execEngines();
 }

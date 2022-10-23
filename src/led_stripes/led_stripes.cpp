@@ -1,11 +1,14 @@
 #include "led_stripes.h"
+#include "../SerialDebug/serial_debug.h"
+
+static SerialDebug Debug(SerialDebug::baudrate::baud_9600, true);
 
 #define MAX_ANALOG_WRITE_VAL			255
 #define PERC_2_ANALOGWRITE(Perc)		((Perc * MAX_ANALOG_WRITE_VAL) / 100)
 
-LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc) : 
-																				_pin(Pin)
+LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc)
 {
+	_pin = Pin;
 	pinMode(_pin, OUTPUT);
 	setDimmingTime(DimmingTime);
 	setBrightness(MaxBrightnessPerc);

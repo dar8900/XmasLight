@@ -5,9 +5,12 @@ uint16_t Potenziometer::_readAnalogPort()
     _analogInstVal = analogRead(_pin);
 }
 
-Potenziometer::Potenziometer(int8_t Pin, uint16_t NSample, uint16_t SamplingRate):
-                                _pin(Pin), _nSample(NSample), _samplingRate(SamplingRate)
+Potenziometer::Potenziometer(int8_t Pin, uint16_t NSample, uint16_t SamplingRate)
+                                
 {
+    _pin = Pin;
+    _nSample = NSample;
+    _samplingRate = SamplingRate;
     _analogReadTimer.start(SamplingRate);
 }
 

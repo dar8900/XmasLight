@@ -2,11 +2,11 @@
 
 #define ENGINE_CYCLE	20 // in ms
 
-ModeButton::ModeButton(int8_t Pin, uint16_t LongPressDelay, bool ActiveLow) : 
-						_pin(Pin),
-						_longPressDelay(LongPressDelay),
-						_activeLow(ActiveLow)
+ModeButton::ModeButton(int8_t Pin, uint16_t LongPressDelay, bool ActiveLow)
 {
+	_pin = Pin;
+	_longPressDelay = LongPressDelay;
+	_activeLow = ActiveLow;
 	if(_activeLow)
 	{
 		pinMode(_pin, INPUT_PULLUP);

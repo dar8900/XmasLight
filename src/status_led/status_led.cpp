@@ -15,11 +15,12 @@ void StatusLed::_setLedDigital(bool Status)
 	}
 }
 
-void StatusLed::_rapidBlink()
+void StatusLed::rapidBlink(uint16_t Delay)
 {
 	_setLedDigital(ON);
-	delay(25);
+	delay(Delay);
 	_setLedDigital(OFF);
+	delay(Delay);
 }
 
 void StatusLed::_bootMode()
@@ -55,7 +56,7 @@ void StatusLed::_autoSwMode()
 	{
 		if(_cnt == 3)
 		{
-			_rapidBlink();
+			rapidBlink();
 			_cnt = 0;
 		}
 		else
@@ -74,6 +75,7 @@ void StatusLed::_offMode()
 StatusLed::StatusLed(int8_t Pin) : _pin(Pin)
 {
 	pinMode(_pin, OUTPUT);
+	digitalWrite(_pin, LOW);
 }
 
 void StatusLed::setStatus(led_mode NewStatus)
