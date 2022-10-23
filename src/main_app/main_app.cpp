@@ -40,12 +40,15 @@ void MainApp::_checkChangeMode()
         {
         case day_led:
             _manualLedSwitch = night_led;
+            Debug.logInfo("Switch manuale alla notte");
             break;
         case night_led:
             _manualLedSwitch = day_led;
+            Debug.logInfo("Switch manuale alla giorno");
             break;
         default:
             _manualLedSwitch = day_led;
+            Debug.logInfo("Switch manuale alla giorno");
             break;
         }
         Debug.logInfo("Modifica manualmente la modalita dei led");
@@ -124,7 +127,8 @@ void MainApp::_mangeLedStripesSwitching()
 void MainApp::_collectPotBrightness()
 {
     uint16_t PotAnalogVal = 0;
-    PotAnalogVal = _pot->getAnalogVal();
+    // PotAnalogVal = _pot->getAnalogVal();
+    PotAnalogVal = MAX_ANALOG_VAL;
     _potManualModeBrightness = (PotAnalogVal * MAX_BRIGHTNESS_PERC) / MAX_ANALOG_VAL;
     if(_potManualModeBrightness > MAX_BRIGHTNESS_PERC)
     {
@@ -170,8 +174,8 @@ MainApp::~MainApp()
 
 void MainApp::setupApp()
 {
-	_lightsMode = auto_mode;
-	_oldLightMode = auto_mode;
+	_lightsMode = manual_mode;
+	_oldLightMode = manual_mode;
 	_wichStripeWasOn = all_off;
 	_manualLedSwitch = all_off;
 	_potManualModeBrightness = 0; 
@@ -180,8 +184,16 @@ void MainApp::setupApp()
 	Debug.setTimePrint(false);
 	Debug.setDebugLevel(SerialDebug::debug_level::all);
 	Debug.logInfo("Application started");
+    if(_lightsMode == manual_mode)
+    {
+        _nightLedStripe->setDimmingTime(NO_DIMMING);
+        _dayLedStripe->setDimmingTime(NO_DIMMING);
+        _statusLed->setStatus(StatusLed::led_mode::manual_switch_mode);
+    }
     for(int i = 0; i < 5; i++)
+    {
         _statusLed->rapidBlink(250);
+    }
 }
 
 void MainApp::runApp()

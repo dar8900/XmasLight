@@ -23,10 +23,12 @@ void LedStripe::setDimmingTime(uint16_t Time)
 		if(_dimmingTime == NO_DIMMING)
 		{
 			_engineCycle = _DIMMING_CYCLE_DFTL;
+			Debug.logInfo("Dimming impostato a 0");
 		}
 		else
 		{
 			_engineCycle = _dimmingTime / MAX_ANALOG_WRITE_VAL;
+			Debug.logInfo("Dimming impostato a: " + String(Time));
 		}
 	}
 }
