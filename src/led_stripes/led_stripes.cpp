@@ -15,7 +15,7 @@ LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc
 
 void LedStripe::setDimmingTime(uint16_t Time)
 {
-	if(Time >= MAX_ANALOG_WRITE_VAL)
+	if(Time >= MAX_ANALOG_WRITE_VAL || Time == NO_DIMMING)
 	{
 		_dimmingTime = Time;
 		if(_dimmingTime == NO_DIMMING)
@@ -80,7 +80,7 @@ void LedStripe::ledStripeEngine()
 			{
 				if(_targetStatus == off_status)
 				{
-					if(_actualBrightness > 0)
+					if(_actualBrightness - 1 > 0)
 					{
 						_actualBrightness--;
 					}
@@ -92,7 +92,7 @@ void LedStripe::ledStripeEngine()
 				}
 				else
 				{
-					if(_actualBrightness < _brightnessTarget)
+					if(_actualBrightness + 1 < _brightnessTarget)
 					{
 						_actualBrightness++;
 					}
