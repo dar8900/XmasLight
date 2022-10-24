@@ -13,69 +13,43 @@ void StatusLed::_setLedDigital(bool Status)
 	{
 		digitalWrite(_pin, LOW);
 	}
+	_ledStatus = Status;
 }
 
-void StatusLed::rapidBlink(uint16_t Delay)
+void StatusLed::_toggleLed()
 {
-	_setLedDigital(ON);
-	delay(Delay);
-	_setLedDigital(OFF);
-	delay(Delay);
+	_setLedDigital(!_ledStatus);
 }
 
-void StatusLed::_bootMode()
+void StatusLed::rapidBlink(uint16_t Delay, uint16_t BlinkTimes = 0)
 {
-	_ledSwichTimer.start(100);
-	if(_ledSwichTimer.isOver(true))
+	if(BlinkTimes == 0)
 	{
-		_ledStatus = !_ledStatus;
-		_setLedDigital(_ledStatus);
+		digitalWrite(_pin, HIGH);
+		delay(Delay);
+		digitalWrite(_pin, LOW);
+		delay(Delay);
 	}
-}
-
-void StatusLed::_errorMode()
-{
-	_ledSwichTimer.start(500);
-	if(_ledSwichTimer.isOver(true))
+	else
 	{
-		_ledStatus = !_ledStatus;
-		_setLedDigital(_ledStatus);
+		for(int i = 0; i < BlinkTimes; i++)
+		{
+			digitalWrite(_pin, HIGH);
+			delay(Delay);
+			digitalWrite(_pin, LOW);
+			delay(Delay);
+		}
 	}
-}
-
-void StatusLed::_manualSwMode()
-{
-	_ledStatus = ON;
 	_setLedDigital(_ledStatus);
 }
 
-void StatusLed::_autoSwMode()
-{
-	_ledSwichTimer.start(1000);
-	if(_ledSwichTimer.isOver(true))
-	{
-		if(_cnt == 3)
-		{
-			rapidBlink();
-			_cnt = 0;
-		}
-		else
-		{
-			_cnt++;
-		}
-	}
-}
 
-void StatusLed::_offMode()
-{
-	_ledStatus = OFF;
-	_setLedDigital(_ledStatus);
-}
 
 StatusLed::StatusLed(int8_t Pin) : _pin(Pin)
 {
 	pinMode(_pin, OUTPUT);
-	digitalWrite(_pin, LOW);
+	_setLedDigital(OFF);
+	_ledSwichTimer.start(10);
 }
 
 void StatusLed::setStatus(led_mode NewStatus)
@@ -90,28 +64,32 @@ void StatusLed::ledEngine()
 {
 	switch (_actualStatus)
 	{
-	case booting_mode:
-		_bootMode();
-		break;
 	case error_mode:
-		_errorMode();
+		if(_ledSwichTimer.isOver(true, 250))
+		{
+			_toggleLed();
+		}
 		break;
 	case manual_switch_mode:
-		_manualSwMode();
+		if(_ledSwichTimer.isOver(true, 1000))
+		{
+			rapidBlink(10);
+		}
 		break;
 	case auto_switch_mode:
-		_autoSwMode();
+		if(_ledSwichTimer.isOver(true, 5000))
+		{
+			rapidBlink(10);
+		}
 		break;
 	case off_mode:
-		_offMode(); 
+		_setLedDigital(OFF);
 		break;
 	default:
 		break;
 	}
 	if(_oldStatus != _actualStatus)
 	{
-		_ledSwichTimer.stop();
-		_oldStatus = _actualStatus;
-		_cnt = 0;
+		rapidBlink(50, 4);
 	}
 }

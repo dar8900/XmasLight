@@ -9,7 +9,6 @@ class StatusLed
 	public:
 		typedef enum
 		{
-			booting_mode = 0,
 			error_mode,
 			manual_switch_mode,
 			auto_switch_mode,
@@ -24,15 +23,11 @@ class StatusLed
 		led_mode _oldStatus = off_mode;
 		Timer _ledSwichTimer;
 		void _setLedDigital(bool Status);
-		void _bootMode();
-		void _errorMode();
-		void _manualSwMode();
-		void _autoSwMode();
-		void _offMode();
+		void _toggleLed();
 
 	public:
 		StatusLed(int8_t Pin);
-		void rapidBlink(uint16_t Delay = 25);
+		void rapidBlink(uint16_t Delay = 25, uint16_t BlinkTimes = 0);
 		void setStatus(led_mode NewStatus);
 		void ledEngine();
 
