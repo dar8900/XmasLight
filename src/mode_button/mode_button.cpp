@@ -21,9 +21,13 @@ ModeButton::ModeButton(int8_t Pin, uint16_t LongPressDelay, bool ActiveLow)
 
 ModeButton::button_mode ModeButton::getButtonMode()
 {
-	button_mode ModeRet = _lastMode;
-	_lastMode = _actualMode;
-	return ModeRet;
+	button_mode ButtRet = no_press;
+	if(_lastMode != no_press)
+	{
+		ButtRet = _lastMode;
+		_lastMode =_actualMode;
+	}
+	return ButtRet;
 }
 
 void ModeButton::modeButtonEngine()
@@ -32,26 +36,32 @@ void ModeButton::modeButtonEngine()
 	if(_modeButtonEngineTimer.isOver(true))
 	{
 		Press = (bool)digitalRead(_pin);
-		if(Press && !_longPressed)
+		if(Press)
 		{
-			_longPressTimer.start(_longPressDelay);
-		}
-		if(_longPressTimer.isOver() && Press && !_longPressed)
-		{
-			_actualMode = long_press;
-			_lastMode = _actualMode;
-			_longPressed = true;
+			if(!_longPressTimer.isRunning() && !_longPressed)
+			{
+				_longPressTimer.start(_longPressDelay);
+			}
+			if(_longPressTimer.isOver() && !_longPressed)
+			{
+				_longPressed = true;
+				_actualMode = long_press;
+				_lastMode =_actualMode;
+			}
+			else
+			{
+				_actualMode = no_press;
+			}
 		}
 		else
 		{
-			if(!Press && _longPressTimer.isRunning())
+			if(_longPressTimer.isRunning())
 			{
 				_longPressTimer.stop();
-				_longPressed = false;
 				_actualMode = short_press;
-				_lastMode = _actualMode;
+				_lastMode =_actualMode;
 			}
-			if(_longPressed || !Press)
+			else
 			{
 				_actualMode = no_press;
 			}
