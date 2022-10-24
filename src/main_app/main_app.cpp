@@ -7,8 +7,6 @@
 #define POT_SAMPLING_RATE               100 // in ms
 #define SWITCH_LEDS_TIME                2000 // in ms
 
-static SerialDebug Debug(SerialDebug::baudrate::baud_9600, true);
-
 void MainApp::_checkChangeMode()
 {
     ModeButton::button_mode SwitchMode = ModeButton::button_mode::no_press;
@@ -23,6 +21,7 @@ void MainApp::_checkChangeMode()
             _nightLedStripe->setDimmingTime(NO_DIMMING);
             _dayLedStripe->setDimmingTime(NO_DIMMING);
             Debug.logInfo("Switch in modalita manuale");
+            _statusLed->setStatus(StatusLed::led_mode::manual_switch_mode);
         }
         else
         {
@@ -32,6 +31,7 @@ void MainApp::_checkChangeMode()
             _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
             _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
             Debug.logInfo("Switch in modalita automatica");
+            _statusLed->setStatus(StatusLed::led_mode::auto_switch_mode);
         }
     }
     else if(SwitchMode == ModeButton::button_mode::short_press && _lightsMode == manual_mode)
@@ -51,7 +51,6 @@ void MainApp::_checkChangeMode()
             Debug.logInfo("Switch manuale alla giorno");
             break;
         }
-        Debug.logInfo("Modifica manualmente la modalita dei led");
     }
 }
 
@@ -109,12 +108,12 @@ void MainApp::_mangeLedStripesSwitching()
         case day_led:
             _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
             _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
-            _wichStripeWasOn = day_led;
+            _wichStripeWasOn = night_led;
             break;
         case night_led:
             _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
             _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
-            _wichStripeWasOn = night_led;
+            _wichStripeWasOn = day_led;
             break;
         default:
             break;
@@ -155,6 +154,10 @@ void MainApp::_execEngines()
 
 MainApp::MainApp()
 {
+    Debug.init();
+	Debug.setLogStatus(true);
+	Debug.setTimePrint(false);
+	Debug.setDebugLevel(SerialDebug::debug_level::all);
     _modeSwitch = new ModeButton(SWITCH_MODE);
     _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
     _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
@@ -175,25 +178,33 @@ MainApp::~MainApp()
 void MainApp::setupApp()
 {
 	_lightsMode = manual_mode;
-	_oldLightMode = manual_mode;
+	_oldLightMode = _lightsMode;
 	_wichStripeWasOn = all_off;
 	_manualLedSwitch = all_off;
 	_potManualModeBrightness = 0; 
-    Debug.init();
-	Debug.setLogStatus(true);
-	Debug.setTimePrint(false);
-	Debug.setDebugLevel(SerialDebug::debug_level::all);
 	Debug.logInfo("Application started");
     if(_lightsMode == manual_mode)
     {
+        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
+        _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
         _nightLedStripe->setDimmingTime(NO_DIMMING);
         _dayLedStripe->setDimmingTime(NO_DIMMING);
+        _manualLedSwitch = day_led;
         _statusLed->setStatus(StatusLed::led_mode::manual_switch_mode);
     }
-    for(int i = 0; i < 5; i++)
+    else if(_lightsMode == auto_mode)
     {
-        _statusLed->rapidBlink(250);
+        _nightLedStripe->setDimmingTime(DIMMING_TIME);
+        _dayLedStripe->setDimmingTime(DIMMING_TIME);
+        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+        _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
+        _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
+        _statusLed->setStatus(StatusLed::led_mode::auto_switch_mode);    
     }
+    _statusLed->rapidBlink(50, 20);
 }
 
 void MainApp::runApp()
