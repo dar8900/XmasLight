@@ -1,4 +1,5 @@
 #include "status_led.h"
+#include "../SerialDebug/serial_debug.h"
 
 #define ON		true
 #define OFF		false
@@ -91,5 +92,6 @@ void StatusLed::ledEngine()
 	if(_oldStatus != _actualStatus)
 	{
 		rapidBlink(50, 4);
+		Debug.logDebug("Modifica modalita status led");
 	}
 }

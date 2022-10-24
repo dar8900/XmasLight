@@ -1,4 +1,5 @@
 #include "mode_button.h"
+#include "../SerialDebug/serial_debug.h"
 
 #define ENGINE_CYCLE	20 // in ms
 
@@ -47,6 +48,7 @@ void ModeButton::modeButtonEngine()
 				_longPressed = true;
 				_actualMode = long_press;
 				_lastMode =_actualMode;
+				Debug.logDebug("Pressione prolungata");
 			}
 			else
 			{
@@ -60,6 +62,7 @@ void ModeButton::modeButtonEngine()
 				_longPressTimer.stop();
 				_actualMode = short_press;
 				_lastMode =_actualMode;
+				Debug.logDebug("Pressione breve");
 			}
 			else
 			{

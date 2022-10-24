@@ -21,7 +21,7 @@ void LedStripe::setDimmingTime(uint16_t Time)
 		if(_dimmingTime == NO_DIMMING)
 		{
 			_engineCycle = _DIMMING_CYCLE_DFTL;
-			Debug.logInfo("Dimming impostato a 0");
+			Debug.logInfo("Dimming impostato a \"NO_DIMMING\"");
 		}
 		else
 		{
@@ -36,6 +36,7 @@ void LedStripe::setStatus(stripe_status NewStatus)
 	if(NewStatus != _targetStatus)
 	{
 		_targetStatus = NewStatus;
+		Debug.logDebug("Settato nuovo stato della striscia led al valore: " + String(NewStatus));
 	}
 }
 
@@ -50,6 +51,7 @@ void LedStripe::setBrightness(uint8_t NewBrightnessPerc)
 	if(AnalogBright != _brightnessTarget && NewBrightnessPerc <= MAX_BRIGHTNESS)
 	{
 		_brightnessTarget = AnalogBright;
+		Debug.logInfo("Impostata nuova luminosita della striscia a: " + String(NewBrightnessPerc));
 	}
 }
 
@@ -65,11 +67,13 @@ void LedStripe::ledStripeEngine()
 				{
 					analogWrite(_pin, 0);
 					_actualBrightness = 0;
+					Debug.logInfo("Striscia spenta senza dimming");
 				}
 				else
 				{
 					analogWrite(_pin, _brightnessTarget);
 					_actualBrightness = _brightnessTarget;
+					Debug.logInfo("Striscia accesa senza dimming");
 				}
 				_actualStatus = _targetStatus;
 			}
@@ -88,6 +92,7 @@ void LedStripe::ledStripeEngine()
 					{
 						_actualStatus = _targetStatus;
 						_actualBrightness = 0;
+						Debug.logInfo("Striscia spenta con dimming");
 					}
 				}
 				else
@@ -100,6 +105,7 @@ void LedStripe::ledStripeEngine()
 					{
 						_actualStatus = _targetStatus;
 						_actualBrightness = _brightnessTarget;
+						Debug.logInfo("Striscia accesa con dimming");
 					}
 				}
 				analogWrite(_pin, _actualBrightness);
