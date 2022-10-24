@@ -7,6 +7,12 @@
 #define POT_SAMPLING_RATE               100 // in ms
 #define SWITCH_LEDS_TIME                2000 // in ms
 
+// #define USE_POTENTIOMETER
+
+#ifndef USE_POTENTIOMETER
+#pragma message("Potentiometer not in use, enable it in main_app.cpp, line 10")
+#endif
+
 void MainApp::_checkChangeMode()
 {
     ModeButton::button_mode SwitchMode = ModeButton::button_mode::no_press;
@@ -139,8 +145,11 @@ void MainApp::_mangeLedStripesSwitching()
 void MainApp::_collectPotBrightness()
 {
     uint16_t PotAnalogVal = 0;
-    // PotAnalogVal = _pot->getAnalogVal();
+#ifdef USE_POTENTIOMETER
+    PotAnalogVal = _pot->getAnalogVal();
+#else    
     PotAnalogVal = MAX_ANALOG_VAL;
+#endif
     _potManualModeBrightness = (PotAnalogVal * MAX_BRIGHTNESS_PERC) / MAX_ANALOG_VAL;
     if(_potManualModeBrightness > MAX_BRIGHTNESS_PERC)
     {
