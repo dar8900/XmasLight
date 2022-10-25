@@ -54,7 +54,7 @@ void MainApp::_checkChangeMode()
             break;
         default:
             _manualLedSwitch = day_led;
-            Debug.logInfo("Switch manuale giorno");
+            Debug.logInfo("Switch manuale giorno default");
             break;
         }
     }
@@ -117,22 +117,22 @@ void MainApp::_mangeLedStripesSwitching()
         switch (_manualLedSwitch)
         {
         case day_led:
-            _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
-            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
-            _wichStripeWasOn = night_led;
-            if(_dayLedStripe->getStatus() == LedStripe::stripe_status::on_status)
+            if(_dayLedStripe->getStatus() != LedStripe::stripe_status::on_status)
             {
                 Debug.logVerbose("Switch manuale ON giorno in corso...");
             }
+            _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
+            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            _wichStripeWasOn = night_led;
             break;
         case night_led:
-            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
-            _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
-            _wichStripeWasOn = day_led;
-            if(_nightLedStripe->getStatus() == LedStripe::stripe_status::on_status)
+            if(_nightLedStripe->getStatus() != LedStripe::stripe_status::on_status)
             {
                 Debug.logVerbose("Switch manuale ON notte in corso...");
             }
+            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+            _wichStripeWasOn = day_led;
             break;
         default:
             break;
@@ -176,11 +176,12 @@ void MainApp::_execEngines()
 
 MainApp::MainApp()
 {
-    Debug.init();
-	Debug.setLogStatus(true);
-	Debug.setTimePrint(true);
-	Debug.setDebugLevel(SerialDebug::debug_level::all);
-    _modeSwitch = new ModeButton(SWITCH_MODE);
+    // Debug.init();
+	// Debug.setLogStatus(true);
+	// Debug.setTimePrint(true);
+	// Debug.setDebugLevel(SerialDebug::debug_level::all);
+    // Debug.logDebug("Inizio debug");
+    _modeSwitch = new ModeButton(SWITCH_MODE, 1500, true);
     _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
     _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
     _pot = new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE);
@@ -203,6 +204,10 @@ void MainApp::setupApp()
 	_wichStripeWasOn = all_off;
 	_manualLedSwitch = all_off;
 	_potManualModeBrightness = 0;
+    Debug.init();
+	Debug.setLogStatus(true);
+	Debug.setTimePrint(true);
+	Debug.setDebugLevel(SerialDebug::debug_level::all);
     Debug.logInfo("");
     Debug.logInfo("##################   XSMAS LIGHTS    ##################");
     Debug.logInfo("");
