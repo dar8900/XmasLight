@@ -91,6 +91,7 @@ void StatusLed::ledEngine()
 	}
 	if(_oldStatus != _actualStatus)
 	{
+		_oldStatus = _actualStatus;
 		rapidBlink(50, 4);
 		Debug.logDebug("Modifica modalita status led");
 	}
