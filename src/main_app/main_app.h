@@ -40,7 +40,8 @@ class MainApp
         uint16_t _potManualModeBrightness = 0;
 
         void _checkChangeMode();
-        void _mangeLedStripesSwitching();
+        void _mangeAutoLedStripesSwitching();
+        void _mangeManualLedStripesSwitching();
         void _collectPotBrightness();
         void _execEngines();
 
