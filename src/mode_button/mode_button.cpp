@@ -26,7 +26,7 @@ ModeButton::button_mode ModeButton::getButtonMode()
 	if(_lastMode != no_press)
 	{
 		ButtRet = _lastMode;
-		_lastMode =_actualMode;
+		_lastMode = no_press;
 	}
 	return ButtRet;
 }
