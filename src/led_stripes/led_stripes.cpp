@@ -51,6 +51,7 @@ void LedStripe::setStatus(stripe_status NewStatus, bool Fast)
 				Debug.logInfo("Striscia accesa in Fast mode");
 				_actualStatus = on_status;
 			}
+			_stripeIsSwitching = false;
 		}
 		_targetStatus = NewStatus;
 		Debug.logDebug("Settato nuovo stato della striscia led al valore: " + String(NewStatus));
