@@ -26,22 +26,23 @@ void MainApp::_checkChangeMode()
             _switchDayNightTimer.stop();
             _nightLedStripe->setDimmingTime(NO_DIMMING);
             _dayLedStripe->setDimmingTime(NO_DIMMING);
-            Debug.logInfo("Switch in modalita manuale");
+            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
+            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
             _statusLed->setStatus(StatusLed::led_mode::manual_switch_mode);
+            Debug.logInfo("Switch in modalita manuale");
         }
         else
         {
             _lightsMode = auto_mode;
-            _wichStripeWasOn = all_off;
+            _wichStripeWasOn = day_led;
             _nightLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
             _dayLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
-            _wichStripeWasOn = day_led;
             _nightLedStripe->setDimmingTime(DIMMING_TIME);
             _dayLedStripe->setDimmingTime(DIMMING_TIME);
             _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
             _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
-            Debug.logInfo("Switch in modalita automatica");
             _statusLed->setStatus(StatusLed::led_mode::auto_switch_mode);
+            Debug.logInfo("Switch in modalita automatica");
         }
     }
     else if(SwitchMode == ModeButton::button_mode::short_press && _lightsMode == manual_mode)
@@ -91,7 +92,7 @@ void MainApp::_mangeAutoLedStripesSwitching()
                 {
                     _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
                 }
-                else if(_wichStripeWasOn == day_led)
+                else
                 {
                     _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
                     _wichStripeWasOn = night_led;
@@ -197,7 +198,7 @@ void MainApp::setupApp()
     Debug.init();
 	Debug.setLogStatus(true);
 	Debug.setTimePrint(true);
-	Debug.setDebugLevel(SerialDebug::debug_level::all);
+	Debug.setDebugLevel(SerialDebug::debug_level::info_debug);
     Debug.logInfo("");
     Debug.logInfo("##################   XSMAS CRECHE    ##################");
     Debug.logInfo("");
