@@ -25,6 +25,7 @@ class LedStripe
 		stripe_status _actualStatus = off_status;
 		stripe_status _targetStatus = off_status;
 		Timer _engineTimer;
+		bool _stripeIsSwitching = false;
 
 	public:
 		const uint8_t MAX_BRIGHTNESS = 100; // Massima luminosità percentuale
@@ -39,10 +40,12 @@ class LedStripe
 
 		/**
 		 * @brief Imposta il nuovo stato da raggiungere dopo il dimming
+		 * 			se Fast imposta subito il nuovo valore senza passare dall'engine
 		 * 
 		 * @param stripe_status NewStatus 
+		 * @param bool Fast 
 		 */
-		void setStatus(stripe_status NewStatus);
+		void setStatus(stripe_status NewStatus, bool Fast = false);
 
 		/**
 		 * @brief Restituisce lo stato attuale della striscia
@@ -50,6 +53,13 @@ class LedStripe
 		 * @return stripe_status ActualStatus 
 		 */
 		stripe_status getStatus();
+
+		/**
+		 * @brief Informa se la striscia sta cambiando
+		 * 
+		 * @return bool
+		 */
+		bool ledSwitching();
 
 		/**
 		 * @brief Imposta la massima luminostà da raggiungere in percentuale

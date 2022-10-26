@@ -31,10 +31,27 @@ void LedStripe::setDimmingTime(uint16_t Time)
 	}
 }
 
-void LedStripe::setStatus(stripe_status NewStatus)
+void LedStripe::setStatus(stripe_status NewStatus, bool Fast)
 {
-	if(NewStatus != _targetStatus)
+	if(NewStatus != _targetStatus || Fast)
 	{
+		if(Fast)
+		{
+			if(NewStatus == off_status)
+			{
+				analogWrite(_pin, 0);
+				_actualBrightness = 0;
+				Debug.logInfo("Striscia spenta in Fast mode");
+				_actualStatus = off_status;
+			}
+			else
+			{
+				analogWrite(_pin, _brightnessTarget);
+				_actualBrightness = _brightnessTarget;
+				Debug.logInfo("Striscia accesa in Fast mode");
+				_actualStatus = on_status;
+			}
+		}
 		_targetStatus = NewStatus;
 		Debug.logDebug("Settato nuovo stato della striscia led al valore: " + String(NewStatus));
 	}
@@ -43,6 +60,11 @@ void LedStripe::setStatus(stripe_status NewStatus)
 LedStripe::stripe_status LedStripe::getStatus()
 {
 	return _actualStatus;
+}
+
+bool LedStripe::ledSwitching()
+{
+	return _stripeIsSwitching;
 }
 
 void LedStripe::setBrightness(uint8_t NewBrightnessPerc)
@@ -84,27 +106,31 @@ void LedStripe::ledStripeEngine()
 			{
 				if(_targetStatus == off_status)
 				{
-					if(_actualBrightness - 1 > 0)
+					if(_actualBrightness > 0)
 					{
 						_actualBrightness--;
+						_stripeIsSwitching = true;
 					}
 					else
 					{
 						_actualStatus = _targetStatus;
 						_actualBrightness = 0;
+						_stripeIsSwitching = false;
 						Debug.logInfo("Striscia spenta con dimming");
 					}
 				}
 				else
 				{
-					if(_actualBrightness + 1 < _brightnessTarget)
+					if(_actualBrightness < _brightnessTarget)
 					{
 						_actualBrightness++;
+						_stripeIsSwitching = true;
 					}
 					else
 					{
 						_actualStatus = _targetStatus;
 						_actualBrightness = _brightnessTarget;
+						_stripeIsSwitching = false;
 						Debug.logInfo("Striscia accesa con dimming");
 					}
 				}
