@@ -70,10 +70,12 @@ void ModeButton::modeButtonEngine()
 				_actualMode = short_press;
 				_lastMode =_actualMode;
 				Debug.logDebug("Pressione breve");
+				_longPressed = false;
 			}
 			else
 			{
 				_actualMode = no_press;
+				_longPressed = false;
 			}
 		}
 	}
