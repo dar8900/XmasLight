@@ -36,7 +36,7 @@ class MainApp
         light_mode _lightsMode = auto_mode;
         light_mode _oldLightMode = auto_mode;
         Timer _switchDayNightTimer;
-        BUTTON_MANAGER *_modeSwitch;
+        ButtonManager *_modeSwitch;
         on_led _wichStripeWasOn = all_off;
         on_led _manualLedSwitch = all_off;
         uint16_t _potManualModeBrightness = 0;
