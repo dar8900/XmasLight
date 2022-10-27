@@ -4,3 +4,7 @@
 [submodule "src/SerialDebug"]
 	path = src/SerialDebug
 	url = git@github.com:dar8900/ArduinoSerialLog.git
+
+[submodule "src/ButtonLib"]
+	path = src/ButtonLib
+	url = git@github.com:dar8900/ButtonLib.git
