@@ -15,7 +15,7 @@
 
 void MainApp::_checkChangeMode()
 {
-    ModeButton::button_mode SwitchMode = ModeButton::button_mode::no_press;
+    BUTTON_MANAGER::button_press_mode SwitchMode = BUTTON_MANAGER::button_press_mode::no_press;
     SwitchMode = _modeSwitch->getButtonMode();
     if(SwitchMode == ModeButton::button_mode::long_press)
     {
@@ -166,13 +166,14 @@ void MainApp::_execEngines()
     _nightLedStripe->ledStripeEngine();
     _pot->analogReadEngine();
     _statusLed->ledEngine();
-    _modeSwitch->modeButtonEngine();
+    _modeSwitch->buttonEngine();
 }
 
 
 MainApp::MainApp()
 {
-    _modeSwitch = new ModeButton(SWITCH_MODE, 1500, true);
+    // _modeSwitch = new ModeButton(SWITCH_MODE, 1500, true);
+    _modeSwitch = new BUTTON_MANAGER();
     _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
     _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
     _pot = new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE);
@@ -226,6 +227,7 @@ void MainApp::setupApp()
         _dayLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
         _statusLed->setStatus(StatusLed::led_mode::auto_switch_mode);    
     }
+    _modeSwitch->setup(SWITCH_MODE, 2000, true);
     _statusLed->rapidBlink(50, 20);
 }
 

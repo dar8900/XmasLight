@@ -8,6 +8,7 @@
 #include "../potentiometer/potentiometer.h"
 #include "../status_led/status_led.h"
 #include "../TimerLib/Timer.hpp"
+#include "../ButtonLib/ButtonLib.h"
 
 #define FW_VERSION      0.4
 
@@ -27,7 +28,7 @@ class MainApp
             all_off
         }on_led;
 
-        ModeButton *_modeSwitch;
+        // ModeButton *_modeSwitch;
         LedStripe *_dayLedStripe;
         LedStripe *_nightLedStripe;
         Potenziometer *_pot;
@@ -35,6 +36,7 @@ class MainApp
         light_mode _lightsMode = auto_mode;
         light_mode _oldLightMode = auto_mode;
         Timer _switchDayNightTimer;
+        BUTTON_MANAGER *_modeSwitch;
         on_led _wichStripeWasOn = all_off;
         on_led _manualLedSwitch = all_off;
         uint16_t _potManualModeBrightness = 0;
