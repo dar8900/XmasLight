@@ -4,7 +4,7 @@
 #include <Chrono.h>
 #include <EEPROM.h>
 
-#define FW_VERSION	 0.3
+#define FW_VERSION	 0.4
 
 
 #define POT_FADING	
