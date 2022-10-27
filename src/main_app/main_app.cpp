@@ -198,11 +198,11 @@ void MainApp::setupApp()
     Debug.init();
 	Debug.setLogStatus(true);
 	Debug.setTimePrint(true);
-	Debug.setDebugLevel(SerialDebug::debug_level::info_debug);
+	Debug.setDebugLevel(SerialDebug::debug_level::error_info_debug);
     Debug.logInfo("");
     Debug.logInfo("##################   XSMAS CRECHE    ##################");
     Debug.logInfo("");
-	Debug.logInfo("Applicazione partita");
+	Debug.logInfo("Versione FW: " + String(FW_VERSION));
     Debug.logInfo("Modalita di partenza: " + String(_lightsMode));
     if(_lightsMode == manual_mode)
     {
@@ -238,6 +238,7 @@ void MainApp::runApp()
         _switchDayNightTimer.start(SWITCH_LEDS_TIME);
         if(_switchDayNightTimer.isOver())
         {
+            Debug.logDebug("Auto mode managament");
 	        _mangeAutoLedStripesSwitching();
         }
     }
