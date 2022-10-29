@@ -121,7 +121,6 @@ static void FadeLedStrips()
 			// CheckButton();
 			CALC_FADING_DELAY(Brightness);
 		}
-		delay(2000);
 		for(int i = MIN_BRIGHTNESS; i <= Brightness; i++)
 		{
 			TurnAnalogPin(LedToTurnOn, i);
