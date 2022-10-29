@@ -5,7 +5,7 @@
 #define DIMMING_TIME                    20000 // in ms
 #define POT_SAMPLE                      50
 #define POT_SAMPLING_RATE               100 // in ms
-#define SWITCH_LEDS_TIME                2000 // in ms
+// #define SWITCH_LEDS_TIME                2000 // in ms
 
 // #define USE_POTENTIOMETER
 
@@ -23,7 +23,7 @@ void MainApp::_checkChangeMode()
         {
             _lightsMode = manual_mode;
             _manualLedSwitch = day_led;
-            _switchDayNightTimer.stop();
+            // _switchDayNightTimer.stop();
             _nightLedStripe->setDimmingTime(NO_DIMMING);
             _dayLedStripe->setDimmingTime(NO_DIMMING);
             _nightLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
@@ -237,12 +237,8 @@ void MainApp::runApp()
     if((!_dayLedStripe->ledSwitching() && !_nightLedStripe->ledSwitching()) && 
         _lightsMode == auto_mode)
     {
-        _switchDayNightTimer.start(SWITCH_LEDS_TIME);
-        if(_switchDayNightTimer.isOver())
-        {
-            Debug.logDebug("Auto mode managament");
-	        _mangeAutoLedStripesSwitching();
-        }
+		Debug.logDebug("Auto mode managament");
+		_mangeAutoLedStripesSwitching();
     }
     else if(_lightsMode == manual_mode)
     {
