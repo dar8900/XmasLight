@@ -10,7 +10,7 @@
 #include "../TimerLib/Timer.hpp"
 #include "../ButtonLib/ButtonLib.h"
 
-#define FW_VERSION      0.4
+#define FW_VERSION      "0.4b"
 
 class MainApp
 {
