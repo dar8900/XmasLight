@@ -72,13 +72,13 @@ void StatusLed::ledEngine()
 		}
 		break;
 	case manual_switch_mode:
-		if(_ledSwichTimer.isOver(true, 1000))
+		if(_ledSwichTimer.isOver(true, 2500))
 		{
 			rapidBlink(10);
 		}
 		break;
 	case auto_switch_mode:
-		if(_ledSwichTimer.isOver(true, 5000))
+		if(_ledSwichTimer.isOver(true, 10000))
 		{
 			rapidBlink(10);
 		}
