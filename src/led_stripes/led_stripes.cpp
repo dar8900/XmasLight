@@ -4,13 +4,17 @@
 #define MAX_ANALOG_WRITE_VAL			255
 #define PERC_2_ANALOGWRITE(Perc)		((Perc * MAX_ANALOG_WRITE_VAL) / 100)
 
-LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc)
+LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc, const char *LedStripeName)
 {
 	_pin = Pin;
 	pinMode(_pin, OUTPUT);
 	setDimmingTime(DimmingTime);
 	setBrightness(MaxBrightnessPerc);
 	_engineTimer.start(_engineCycle);
+	if(LedStripeName)
+	{
+		_ledStripeName = LedStripeName;
+	}
 }
 
 void LedStripe::setDimmingTime(uint16_t Time)
@@ -26,7 +30,7 @@ void LedStripe::setDimmingTime(uint16_t Time)
 		else
 		{
 			_engineCycle = _dimmingTime / MAX_ANALOG_WRITE_VAL;
-			Debug.logInfo("Dimming impostato a: " + String(Time));
+			Debug.logInfo("Dimming impostato a: " + String(Time) + " ledEngineCyle impostato a: " + String(_engineCycle));
 		}
 	}
 }
@@ -54,6 +58,10 @@ void LedStripe::setStatus(stripe_status NewStatus, bool Fast)
 			_stripeIsSwitching = false;
 		}
 		_targetStatus = NewStatus;
+		if(_ledStripeName)
+		{
+			Debug.logDebug("Impostazione nuovo status della striscia: " + String(_ledStripeName));
+		}
 		Debug.logDebug("Settato nuovo stato della striscia led al valore: " + String(NewStatus));
 	}
 }
@@ -74,6 +82,10 @@ void LedStripe::setBrightness(uint8_t NewBrightnessPerc)
 	if(AnalogBright != _brightnessTarget && NewBrightnessPerc <= MAX_BRIGHTNESS)
 	{
 		_brightnessTarget = AnalogBright;
+		if(_ledStripeName)
+		{
+			Debug.logDebug("Impostazione brightness striscia: " + String(_ledStripeName));
+		}
 		Debug.logInfo("Impostata nuova luminosita della striscia a: " + String(NewBrightnessPerc));
 	}
 }

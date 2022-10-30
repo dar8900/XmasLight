@@ -17,6 +17,7 @@ class LedStripe
 
 	private:
 		const uint16_t _DIMMING_CYCLE_DFTL = 100; // in ms
+		char *_ledStripeName = NULL;
 		uint16_t _engineCycle = _DIMMING_CYCLE_DFTL; // in ms
 		int8_t _pin = -1;
 		uint16_t _brightnessTarget = 0;
@@ -30,7 +31,7 @@ class LedStripe
 	public:
 		const uint8_t MAX_BRIGHTNESS = 100; // Massima luminosità percentuale
 
-		LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPercent);
+		LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPercent, const char *LedStripeName = NULL);
 		/**
 		 * @brief Imposta il tempo di dimming tra accensione e spegnimento (in ms)
 		 * 
