@@ -35,11 +35,12 @@ class MainApp
         StatusLed *_statusLed;
         light_mode _lightsMode = auto_mode;
         light_mode _oldLightMode = auto_mode;
-        // Timer _switchDayNightTimer; Eliminato per via 
+        // Timer _switchDayNightTimer; Eliminato per via delle nuove specifiche
         ButtonManager *_modeSwitch;
         on_led _wichStripeWasOn = all_off;
         on_led _manualLedSwitch = all_off;
         uint16_t _potManualModeBrightness = 0;
+        Timer _mainAppCyle;
 
         void _checkChangeMode();
         void _mangeAutoLedStripesSwitching();

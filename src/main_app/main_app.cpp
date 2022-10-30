@@ -54,9 +54,12 @@ void MainApp::_checkChangeMode()
             Debug.logInfo("Switch manuale notte");
             break;
         case night_led:
-            _manualLedSwitch = day_led;
-            Debug.logInfo("Switch manuale giorno");
+            _manualLedSwitch = all_off;
+            Debug.logInfo("Switch manuale a tutto spento");
             break;
+        case all_off:
+            _manualLedSwitch = day_led;
+            Debug.logInfo("Switch manuale giorno default");
         default:
             _manualLedSwitch = day_led;
             Debug.logInfo("Switch manuale giorno default");
@@ -71,51 +74,37 @@ void MainApp::_mangeAutoLedStripesSwitching()
     LedStripe::stripe_status DayLedStatus = _dayLedStripe->getStatus();
     LedStripe::stripe_status NightLedStatus = _nightLedStripe->getStatus();
 
-    switch (DayLedStatus)
+    if (DayLedStatus == LedStripe::stripe_status::on_status && NightLedStatus  == LedStripe::stripe_status::off_status)
     {
-    case LedStripe::stripe_status::on_status:
-        switch (NightLedStatus)
+        _wichStripeWasOn = day_led;
+        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
+    }
+    else if(DayLedStatus == LedStripe::stripe_status::off_status && NightLedStatus == LedStripe::stripe_status::on_status)
+    {
+        _wichStripeWasOn = night_led;
+        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+    }
+    else if(DayLedStatus == LedStripe::stripe_status::off_status && NightLedStatus  == LedStripe::stripe_status::off_status)
+    {
+        if(_wichStripeWasOn == night_led)
         {
-        case LedStripe::stripe_status::off_status:
-            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
-            _wichStripeWasOn = day_led;
-            break;
-        default:
-            break;
+            _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
         }
-        break;
-    case LedStripe::stripe_status::off_status:
-        switch (NightLedStatus)
+        else
         {
-        case LedStripe::stripe_status::off_status:
-                if(_wichStripeWasOn == night_led)
-                {
-                    _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
-                }
-                else
-                {
-                    _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
-                    _wichStripeWasOn = night_led;
-                }
-            break;
-        case LedStripe::stripe_status::on_status:
-            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
-            break;
-        default:
-            break;
+            _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
         }
-        break;
-    default:
-        break;
-    }       
+    }
 }
 
 void MainApp::_mangeManualLedStripesSwitching()
 {
+    LedStripe::stripe_status DayLedStatus = _dayLedStripe->getStatus();
+    LedStripe::stripe_status NightLedStatus = _nightLedStripe->getStatus();
     switch (_manualLedSwitch)
     {
     case day_led:
-        if(_dayLedStripe->getStatus() != LedStripe::stripe_status::on_status)
+        if(DayLedStatus != LedStripe::stripe_status::on_status)
         {
             Debug.logVerbose("Switch manuale ON giorno in corso...");
         }
@@ -124,7 +113,7 @@ void MainApp::_mangeManualLedStripesSwitching()
         _wichStripeWasOn = night_led;
         break;
     case night_led:
-        if(_nightLedStripe->getStatus() != LedStripe::stripe_status::on_status)
+        if(NightLedStatus != LedStripe::stripe_status::on_status)
         {
             Debug.logVerbose("Switch manuale ON notte in corso...");
         }
@@ -132,6 +121,15 @@ void MainApp::_mangeManualLedStripesSwitching()
         _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
         _wichStripeWasOn = day_led;
         break;
+    case all_off:
+        if(DayLedStatus != LedStripe::stripe_status::off_status && NightLedStatus != LedStripe::stripe_status::off_status)
+        {
+            Debug.logVerbose("Spegnimento manuale led in corso...");
+        }
+        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _wichStripeWasOn = all_off;
+        break;        
     default:
         break;
     }    
@@ -174,8 +172,8 @@ MainApp::MainApp()
 {
     // _modeSwitch = new ModeButton(SWITCH_MODE, 1500, true);
     _modeSwitch = new ButtonManager();
-    _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
-    _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC);
+    _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC, "Led Giorno");
+    _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC, "Led Notte");
     _pot = new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE);
     _statusLed = new StatusLed(STATUS_LED);
 }
@@ -192,7 +190,7 @@ MainApp::~MainApp()
 
 void MainApp::setupApp()
 {
-	_lightsMode = manual_mode;
+	_lightsMode = auto_mode;
 	_wichStripeWasOn = all_off;
 	_manualLedSwitch = all_off;
 	_potManualModeBrightness = 0;
@@ -228,21 +226,25 @@ void MainApp::setupApp()
         _statusLed->setStatus(StatusLed::led_mode::auto_switch_mode);    
     }
     _modeSwitch->setup(SWITCH_MODE, 2000, true);
-    _statusLed->rapidBlink(50, 20);
+    _statusLed->rapidBlink(50, 10);
+    _mainAppCyle.start(100);
 }
 
 void MainApp::runApp()
 {
-	_checkChangeMode();
-    if((!_dayLedStripe->ledSwitching() && !_nightLedStripe->ledSwitching()) && 
-        _lightsMode == auto_mode)
+    if(_mainAppCyle.isOver(true))
     {
-		Debug.logDebug("Auto mode managament");
-		_mangeAutoLedStripesSwitching();
-    }
-    else if(_lightsMode == manual_mode)
-    {
-        _mangeManualLedStripesSwitching();
+        _checkChangeMode();
+        if((!_dayLedStripe->ledSwitching() && !_nightLedStripe->ledSwitching()) && 
+            _lightsMode == auto_mode)
+        {
+            Debug.logDebug("Auto mode managament");
+            _mangeAutoLedStripesSwitching();
+        }
+        else if(_lightsMode == manual_mode)
+        {
+            _mangeManualLedStripesSwitching();
+        }
     }
 	_execEngines();
 }
