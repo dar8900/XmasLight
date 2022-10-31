@@ -13,6 +13,11 @@
 #pragma message("Potentiometer not in use, enable it in main_app.cpp, line 10")
 #endif
 
+// #define TEST_PANIC_MODE
+#ifdef TEST_PANIC_MODE
+#pragma message("Panic test enabled!")
+#endif
+
 void MainApp::_panic(const char *PanicMsg)
 {
     Timer PanicTimer;
@@ -259,6 +264,9 @@ void MainApp::setupApp()
     _modeSwitch->setup(SWITCH_MODE, 2000, true);
     _statusLed->rapidBlink(50, 10);
     _mainAppCyle.start(100);
+#ifdef TEST_PANIC_MODE
+    _panic();
+#endif
 }
 
 void MainApp::runApp()
