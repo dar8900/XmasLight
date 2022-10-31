@@ -34,14 +34,13 @@ class MainApp
         Potenziometer *_pot;
         StatusLed *_statusLed;
         light_mode _lightsMode = auto_mode;
-        light_mode _oldLightMode = auto_mode;
-        // Timer _switchDayNightTimer; Eliminato per via delle nuove specifiche
         ButtonManager *_modeSwitch;
         on_led _wichStripeWasOn = all_off;
         on_led _manualLedSwitch = all_off;
         uint16_t _potManualModeBrightness = 0;
         Timer _mainAppCyle;
 
+        void _switchLightMode(light_mode NewMode);
         void _checkChangeMode();
         void _mangeAutoLedStripesSwitching();
         void _mangeManualLedStripesSwitching();
