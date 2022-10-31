@@ -13,6 +13,31 @@
 #pragma message("Potentiometer not in use, enable it in main_app.cpp, line 10")
 #endif
 
+void MainApp::_panic(const char *PanicMsg)
+{
+    Timer PanicTimer;
+    PanicTimer.start(500);
+    _switchLightMode(manual_mode);
+    _nightLedStripe->ledStripeEngine();
+    _dayLedStripe->ledStripeEngine();
+    _statusLed->setStatus(StatusLed::led_mode::error_mode);
+    while(1)
+    {
+        if(PanicTimer.isOver(true))
+        {
+            if(PanicMsg)
+            {
+                Debug.logError("PANIC!!! Msg -> " + String(PanicMsg));
+            }
+            else
+            {
+                Debug.logError("PANIC!!!");
+            }
+        }
+        _statusLed->ledEngine();
+    }
+}
+
 void MainApp::_switchLightMode(light_mode NewMode)
 {
     if(NewMode == auto_mode)
@@ -67,8 +92,7 @@ void MainApp::_checkChangeMode()
             _manualLedSwitch = day_led;
             Debug.logInfo("Switch manuale giorno default");
         default:
-            _manualLedSwitch = day_led;
-            Debug.logError("Switch manuale giorno default");
+            _panic();
             break;
         }
     }
@@ -79,27 +103,49 @@ void MainApp::_mangeAutoLedStripesSwitching()
 {
     LedStripe::stripe_status DayLedStatus = _dayLedStripe->getStatus();
     LedStripe::stripe_status NightLedStatus = _nightLedStripe->getStatus();
-
-    if (DayLedStatus == LedStripe::stripe_status::on_status && NightLedStatus  == LedStripe::stripe_status::off_status)
+    switch (DayLedStatus)
     {
-        _wichStripeWasOn = day_led;
-        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
-    }
-    else if(DayLedStatus == LedStripe::stripe_status::off_status && NightLedStatus == LedStripe::stripe_status::on_status)
-    {
-        _wichStripeWasOn = night_led;
-        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
-    }
-    else if(DayLedStatus == LedStripe::stripe_status::off_status && NightLedStatus  == LedStripe::stripe_status::off_status)
-    {
-        if(_wichStripeWasOn == night_led)
+    case LedStripe::stripe_status::on_status:
+        switch (NightLedStatus)
         {
-            _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
+        case LedStripe::stripe_status::on_status:
+            /* Never reach this state */
+            _panic("Entrambe le strisce sono in modalità ON");
+            break;
+        case LedStripe::stripe_status::off_status:
+            _wichStripeWasOn = day_led;
+            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            break;
+        default:
+            _panic();
+            break;
         }
-        else
+        break;
+    case LedStripe::stripe_status::off_status:
+        switch (NightLedStatus)
         {
-            _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+        case LedStripe::stripe_status::on_status:
+            _wichStripeWasOn = night_led;
+            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            break;
+        case LedStripe::stripe_status::off_status:
+            if(_wichStripeWasOn == night_led)
+            {
+                _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
+            }
+            else
+            {
+                _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+            }
+            break;
+        default:
+            _panic();
+            break;
         }
+        break;
+    default:
+        _panic();
+        break;
     }
 }
 
@@ -137,6 +183,7 @@ void MainApp::_mangeManualLedStripesSwitching()
         _wichStripeWasOn = all_off;
         break;        
     default:
+        _panic();
         break;
     }    
 }

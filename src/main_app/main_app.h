@@ -46,6 +46,7 @@ class MainApp
         void _mangeManualLedStripesSwitching();
         void _collectPotBrightness();
         void _execEngines();
+        void _panic(const char *PanicMsg = NULL);
 
     public:
         MainApp();
