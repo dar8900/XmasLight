@@ -49,8 +49,8 @@ void MainApp::_switchLightMode(light_mode NewMode)
     {
         _lightsMode = auto_mode;
         _wichStripeWasOn = day_led;
-        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
-        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
+        _nightLedStripe->setStatus(LedDimming::stripe_status::off_status, true);
+        _dayLedStripe->setStatus(LedDimming::stripe_status::off_status, true);
         _nightLedStripe->setDimmingTime(DIMMING_TIME);
         _dayLedStripe->setDimmingTime(DIMMING_TIME);
         _nightLedStripe->setBrightness(MAX_BRIGHTNESS_PERC);
@@ -64,8 +64,8 @@ void MainApp::_switchLightMode(light_mode NewMode)
         _manualLedSwitch = day_led;
         _nightLedStripe->setDimmingTime(NO_DIMMING);
         _dayLedStripe->setDimmingTime(NO_DIMMING);
-        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
-        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status, true);
+        _nightLedStripe->setStatus(LedDimming::stripe_status::off_status, true);
+        _dayLedStripe->setStatus(LedDimming::stripe_status::off_status, true);
         _statusLed->setStatus(StatusLed::led_mode::manual_switch_mode);
         Debug.logInfo("Switch in modalita manuale");
     }
@@ -106,41 +106,41 @@ void MainApp::_checkChangeMode()
 
 void MainApp::_mangeAutoLedStripesSwitching()
 {
-    LedStripe::stripe_status DayLedStatus = _dayLedStripe->getStatus();
-    LedStripe::stripe_status NightLedStatus = _nightLedStripe->getStatus();
+    LedDimming::stripe_status DayLedStatus = _dayLedStripe->getStatus();
+    LedDimming::stripe_status NightLedStatus = _nightLedStripe->getStatus();
     switch (DayLedStatus)
     {
-    case LedStripe::stripe_status::on_status:
+    case LedDimming::stripe_status::on_status:
         switch (NightLedStatus)
         {
-        case LedStripe::stripe_status::on_status:
+        case LedDimming::stripe_status::on_status:
             /* Never reach this state */
             _panic("Entrambe le strisce sono in modalità ON");
             break;
-        case LedStripe::stripe_status::off_status:
+        case LedDimming::stripe_status::off_status:
             _wichStripeWasOn = day_led;
-            _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            _dayLedStripe->setStatus(LedDimming::stripe_status::off_status);
             break;
         default:
             _panic();
             break;
         }
         break;
-    case LedStripe::stripe_status::off_status:
+    case LedDimming::stripe_status::off_status:
         switch (NightLedStatus)
         {
-        case LedStripe::stripe_status::on_status:
+        case LedDimming::stripe_status::on_status:
             _wichStripeWasOn = night_led;
-            _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+            _nightLedStripe->setStatus(LedDimming::stripe_status::off_status);
             break;
-        case LedStripe::stripe_status::off_status:
+        case LedDimming::stripe_status::off_status:
             if(_wichStripeWasOn == night_led)
             {
-                _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
+                _dayLedStripe->setStatus(LedDimming::stripe_status::on_status);
             }
             else
             {
-                _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+                _nightLedStripe->setStatus(LedDimming::stripe_status::on_status);
             }
             break;
         default:
@@ -156,35 +156,35 @@ void MainApp::_mangeAutoLedStripesSwitching()
 
 void MainApp::_mangeManualLedStripesSwitching()
 {
-    LedStripe::stripe_status DayLedStatus = _dayLedStripe->getStatus();
-    LedStripe::stripe_status NightLedStatus = _nightLedStripe->getStatus();
+    LedDimming::stripe_status DayLedStatus = _dayLedStripe->getStatus();
+    LedDimming::stripe_status NightLedStatus = _nightLedStripe->getStatus();
     switch (_manualLedSwitch)
     {
     case day_led:
-        if(DayLedStatus != LedStripe::stripe_status::on_status)
+        if(DayLedStatus != LedDimming::stripe_status::on_status)
         {
             Debug.logVerbose("Switch manuale ON giorno in corso...");
         }
-        _dayLedStripe->setStatus(LedStripe::stripe_status::on_status);
-        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _dayLedStripe->setStatus(LedDimming::stripe_status::on_status);
+        _nightLedStripe->setStatus(LedDimming::stripe_status::off_status);
         _wichStripeWasOn = night_led;
         break;
     case night_led:
-        if(NightLedStatus != LedStripe::stripe_status::on_status)
+        if(NightLedStatus != LedDimming::stripe_status::on_status)
         {
             Debug.logVerbose("Switch manuale ON notte in corso...");
         }
-        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
-        _nightLedStripe->setStatus(LedStripe::stripe_status::on_status);
+        _dayLedStripe->setStatus(LedDimming::stripe_status::off_status);
+        _nightLedStripe->setStatus(LedDimming::stripe_status::on_status);
         _wichStripeWasOn = day_led;
         break;
     case all_off:
-        if(DayLedStatus != LedStripe::stripe_status::off_status && NightLedStatus != LedStripe::stripe_status::off_status)
+        if(DayLedStatus != LedDimming::stripe_status::off_status && NightLedStatus != LedDimming::stripe_status::off_status)
         {
             Debug.logVerbose("Spegnimento manuale led in corso...");
         }
-        _dayLedStripe->setStatus(LedStripe::stripe_status::off_status);
-        _nightLedStripe->setStatus(LedStripe::stripe_status::off_status);
+        _dayLedStripe->setStatus(LedDimming::stripe_status::off_status);
+        _nightLedStripe->setStatus(LedDimming::stripe_status::off_status);
         _wichStripeWasOn = all_off;
         break;        
     default:
@@ -230,8 +230,8 @@ MainApp::MainApp()
 {
     // _modeSwitch = new ModeButton(SWITCH_MODE, 1500, true);
     _modeSwitch = new ButtonManager();
-    _dayLedStripe = new LedStripe(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC, "Led Giorno");
-    _nightLedStripe = new LedStripe(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC, "Led Notte");
+    _dayLedStripe = new LedDimming(LED_DAY, DIMMING_TIME, MAX_BRIGHTNESS_PERC, "Led Giorno");
+    _nightLedStripe = new LedDimming(LED_NIGHT, DIMMING_TIME, MAX_BRIGHTNESS_PERC, "Led Notte");
     _pot = new Potenziometer(POTENTIOMETER, POT_SAMPLE, POT_SAMPLING_RATE);
     _statusLed = new StatusLed(STATUS_LED);
 }

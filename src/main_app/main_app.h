@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "pinout.h"
 #include "../mode_button/mode_button.h"
-#include "../led_stripes/led_stripes.h"
+#include "../LedDimming/led_dimming.h"
 #include "../potentiometer/potentiometer.h"
 #include "../status_led/status_led.h"
 #include "../TimerLib/Timer.hpp"
@@ -29,8 +29,8 @@ class MainApp
         }on_led;
 
         // ModeButton *_modeSwitch;
-        LedStripe *_dayLedStripe;
-        LedStripe *_nightLedStripe;
+        LedDimming *_dayLedStripe;
+        LedDimming *_nightLedStripe;
         Potenziometer *_pot;
         StatusLed *_statusLed;
         light_mode _lightsMode = auto_mode;
