@@ -22,7 +22,7 @@ void StatusLed::_toggleLed()
 	_setLedDigital(!_ledStatus);
 }
 
-void StatusLed::rapidBlink(uint16_t Delay, uint16_t BlinkTimes = 0)
+void StatusLed::rapidBlink(uint16_t Delay, uint16_t BlinkTimes)
 {
 	if(BlinkTimes == 0)
 	{
