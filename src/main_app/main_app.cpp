@@ -6,11 +6,12 @@
 #define POT_SAMPLE                      50
 #define POT_SAMPLING_RATE               100 // in ms
 // #define SWITCH_LEDS_TIME                2000 // in ms
+#define LED_DIMMING_ENGINE_CYCLE        80
 
 // #define USE_POTENTIOMETER
 
 #ifndef USE_POTENTIOMETER
-#pragma message("Potentiometer not in use, enable it in main_app.cpp, line 10")
+#pragma message("Potentiometer not in use, enable it in main_app.cpp, line 11")
 #endif
 
 // #define TEST_PANIC_MODE
@@ -96,6 +97,7 @@ void MainApp::_checkChangeMode()
         case all_off:
             _manualLedSwitch = day_led;
             Debug.logInfo("Switch manuale giorno default");
+            break;
         default:
             _panic();
             break;
@@ -254,12 +256,14 @@ void MainApp::setupApp()
     Debug.init();
 	Debug.setLogStatus(true);
 	Debug.setTimePrint(true);
-	Debug.setDebugLevel(SerialDebug::debug_level::error_info_debug);
+	Debug.setDebugLevel(SerialDebug::debug_level::all);
     Debug.logInfo("");
     Debug.logInfo("##################   XSMAS CRECHE    ##################");
     Debug.logInfo("");
 	Debug.logInfo("Versione FW: " + String(FW_VERSION));
     Debug.logInfo("Modalita di partenza: " + String(_lightsMode));
+    _dayLedStripe->setEngineCycle(LED_DIMMING_ENGINE_CYCLE);
+    _nightLedStripe->setEngineCycle(LED_DIMMING_ENGINE_CYCLE);
     _switchLightMode(auto_mode);
     _modeSwitch->setup(SWITCH_MODE, 2000, true);
     _statusLed->rapidBlink(50, 10);
