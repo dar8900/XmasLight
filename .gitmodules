@@ -8,3 +8,6 @@
 [submodule "src/ButtonLib"]
 	path = src/ButtonLib
 	url = git@github.com:dar8900/ButtonLib.git
+[submodule "src/LedDimming"]
+	path = src/LedDimming
+	url = git@github.com:dar8900/LedDimming.git
