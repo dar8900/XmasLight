@@ -1,8 +1,10 @@
 #include "led_stripes.h"
 #include "../SerialDebug/serial_debug.h"
 
-#define MAX_ANALOG_WRITE_VAL			255
-#define PERC_2_ANALOGWRITE(Perc)		((Perc * MAX_ANALOG_WRITE_VAL) / 100)
+uint16_t LedStripe::_percToAnalogWrite(uint8_t Perc)
+{
+	return ((Perc * _pwmRange) / 100);
+}
 
 LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc, const char *LedStripeName)
 {
@@ -10,16 +12,19 @@ LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc
 	pinMode(_pin, OUTPUT);
 	setDimmingTime(DimmingTime);
 	setBrightness(MaxBrightnessPerc);
+#ifdef ESP8266
+	analogWriteFreq(_pwmFrq);
+#endif
 	_engineTimer.start(_engineCycle);
 	if(LedStripeName)
 	{
-		_ledStripeName = LedStripeName;
+		_ledStripeName = const_cast<char*>(LedStripeName);
 	}
 }
 
 void LedStripe::setDimmingTime(uint16_t Time)
 {
-	if(Time >= MAX_ANALOG_WRITE_VAL || Time == NO_DIMMING)
+	if(Time >= _pwmRange || Time == NO_DIMMING)
 	{
 		_dimmingTime = Time;
 		if(_dimmingTime == NO_DIMMING)
@@ -29,8 +34,9 @@ void LedStripe::setDimmingTime(uint16_t Time)
 		}
 		else
 		{
-			_engineCycle = _dimmingTime / MAX_ANALOG_WRITE_VAL;
-			Debug.logInfo("Dimming impostato a: " + String(Time) + " ledEngineCyle impostato a: " + String(_engineCycle));
+			_engineCycle = _dimmingTime / _pwmRange;
+			Debug.logInfo("Dimming impostato a: " + String(Time) + 
+							" ledEngineCyle impostato a: " + String(_engineCycle));
 		}
 	}
 }
@@ -78,7 +84,7 @@ bool LedStripe::ledSwitching()
 
 void LedStripe::setBrightness(uint8_t NewBrightnessPerc)
 {
-	uint16_t AnalogBright = PERC_2_ANALOGWRITE(NewBrightnessPerc);
+	uint16_t AnalogBright = _percToAnalogWrite(NewBrightnessPerc);
 	if(AnalogBright != _brightnessTarget && NewBrightnessPerc <= MAX_BRIGHTNESS)
 	{
 		_brightnessTarget = AnalogBright;

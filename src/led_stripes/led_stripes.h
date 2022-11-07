@@ -27,6 +27,13 @@ class LedStripe
 		stripe_status _targetStatus = off_status;
 		Timer _engineTimer;
 		bool _stripeIsSwitching = false;
+#ifdef ESP8266
+		uint16_t _pwmRange = 1023;
+		uint16_t _pwmFrq = 5000;
+#else
+		uint16_t _pwmRange = 255;
+#endif
+		uint16_t _percToAnalogWrite(uint8_t Perc);
 
 	public:
 		const uint8_t MAX_BRIGHTNESS = 100; // Massima luminosità percentuale
