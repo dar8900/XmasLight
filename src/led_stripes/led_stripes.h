@@ -16,22 +16,22 @@ class LedStripe
 		}stripe_status;
 
 	private:
-		const uint16_t _DIMMING_CYCLE_DFTL = 100; // in ms
+		const uint16_t _DIMMING_CYCLE = 10; // in ms
 		char *_ledStripeName = NULL;
-		uint16_t _engineCycle = _DIMMING_CYCLE_DFTL; // in ms
 		int8_t _pin = -1;
 		uint16_t _brightnessTarget = 0;
 		uint16_t _actualBrightness = 0;
+		uint16_t _brightnessIncrement = 0;
 		uint16_t _dimmingTime = 0;
 		stripe_status _actualStatus = off_status;
 		stripe_status _targetStatus = off_status;
 		Timer _engineTimer;
 		bool _stripeIsSwitching = false;
 #ifdef ESP8266
-		uint16_t _pwmRange = 1023;
-		uint16_t _pwmFrq = 5000;
+		const uint16_t _pwmRange = 1023;
+		const uint16_t _pwmFrq = 5000;
 #else
-		uint16_t _pwmRange = 255;
+		const uint16_t _pwmRange = 255;
 #endif
 		uint16_t _percToAnalogWrite(uint8_t Perc);
 

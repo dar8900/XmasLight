@@ -13,30 +13,30 @@ LedStripe::LedStripe(int8_t Pin, uint16_t DimmingTime, uint8_t MaxBrightnessPerc
 	setDimmingTime(DimmingTime);
 	setBrightness(MaxBrightnessPerc);
 #ifdef ESP8266
+	analogWriteRange(_pwmRange);
 	analogWriteFreq(_pwmFrq);
 #endif
-	_engineTimer.start(_engineCycle);
+	_engineTimer.start(_DIMMING_CYCLE);
 	if(LedStripeName)
 	{
 		_ledStripeName = const_cast<char*>(LedStripeName);
 	}
+	setDimmingTime(NO_DIMMING);
 }
 
 void LedStripe::setDimmingTime(uint16_t Time)
 {
-	if(Time >= _pwmRange || Time == NO_DIMMING)
+	if((Time <= _pwmRange * _DIMMING_CYCLE && Time >= _DIMMING_CYCLE) || 
+		Time == NO_DIMMING)
 	{
 		_dimmingTime = Time;
 		if(_dimmingTime == NO_DIMMING)
 		{
-			_engineCycle = _DIMMING_CYCLE_DFTL;
 			Debug.logInfo("Dimming impostato a \"NO_DIMMING\"");
 		}
 		else
 		{
-			_engineCycle = _dimmingTime / _pwmRange;
-			Debug.logInfo("Dimming impostato a: " + String(Time) + 
-							" ledEngineCyle impostato a: " + String(_engineCycle));
+			_brightnessIncrement = _pwmRange / (_dimmingTime / _DIMMING_CYCLE);
 		}
 	}
 }
@@ -98,7 +98,7 @@ void LedStripe::setBrightness(uint8_t NewBrightnessPerc)
 
 void LedStripe::ledStripeEngine()
 {
-	if(_engineTimer.isOver(true, _engineCycle))
+	if(_engineTimer.isOver(true))
 	{
 		if(_dimmingTime == NO_DIMMING)
 		{
@@ -125,9 +125,9 @@ void LedStripe::ledStripeEngine()
 			{
 				if(_targetStatus == off_status)
 				{
-					if(_actualBrightness > 0)
+					if(_actualBrightness - _brightnessIncrement > 0)
 					{
-						_actualBrightness--;
+						_actualBrightness -= _brightnessIncrement;
 						_stripeIsSwitching = true;
 					}
 					else
@@ -140,9 +140,9 @@ void LedStripe::ledStripeEngine()
 				}
 				else
 				{
-					if(_actualBrightness < _brightnessTarget)
+					if(_actualBrightness + _brightnessIncrement < _brightnessTarget)
 					{
-						_actualBrightness++;
+						_actualBrightness += _brightnessIncrement;
 						_stripeIsSwitching = true;
 					}
 					else
