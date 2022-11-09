@@ -250,7 +250,6 @@ void CheckButton()
 			LedStripeMode++;
 		else
 			LedStripeMode = OFF_MODE;
-		EEPROM.update(LED_MODE_ADDR, LedStripeMode);
 		BlinkLed(STATUS_LED, 5, 1);
 		delay(20);
 	}
@@ -265,22 +264,6 @@ void InputCtrl()
 #endif	
 }
 
-void EepromInit()
-{
-	if(EEPROM.read(LED_MODE_ADDR) == 0xFF)
-	{
-		EEPROM.write(LED_MODE_ADDR, NIGHT_MODE);
-		for(int i = 0; i < 3; i ++)
-		{
-			BlinkLed(STATUS_LED, 10, 3);
-			delay(500);
-		}
-	}
-	else
-		BlinkLed(STATUS_LED, 1000, 3);
-
-}
-
 void setup()
 {
 	// Inizializzo variabile per il cronometro
@@ -292,7 +275,7 @@ void setup()
 	pinMode(DAY_LED_STRIP, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
 	pinMode(CHANGE_MODE, INPUT);
-	EepromInit();
+
 	
 	delay(1000);
 	Brightness = MIN_BRIGHTNESS;
@@ -301,7 +284,7 @@ void setup()
 	TurnAnalogPin(DAY_LED_STRIP, Brightness);	
 	SwitchTimer.restart();
 	WichStripeIsOn = NIGHT_LED_STRIP;
-	LedStripeMode = EEPROM.read(LED_MODE_ADDR);
+	LedStripeMode = SWITCH_MODE;
 	WichMode = MAX_MODES;
 	TurnPin(STATUS_LED, OFF);
 	Brightness = MAX_BRIGHTNESS;
