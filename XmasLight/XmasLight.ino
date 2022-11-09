@@ -12,8 +12,8 @@
 #define ON 			  					true
 #define OFF			  					false
 
-#define NIGHT_LED_STRIP   	 			0
-#define DAY_LED_STRIP   	 			1
+#define NIGHT_LED_PIN	   	 			0
+#define DAY_LED_PIN		  	 			1
 #define STATUS_LED 	 		 			4
 #define CHANGE_MODE	 		 			2
 
@@ -36,21 +36,26 @@
 #define FADING_DELAY                    (20 * 1000)
 #define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
 
-
+typedef enum
+{
+	NIGHT_LED = 0,
+	DAY_LED,
+	NO_LED
+}led_type;
 
 // Associo dei numeri alle varie modalità operative
-enum
+typedef enum
 {
 	OFF_MODE = 0,
 	NIGHT_MODE,
 	DAY_MODE,
 	SWITCH_MODE,
 	MAX_MODES
-};
+}led_mode;
 
 Chrono SwitchTimer(Chrono::SECONDS);
-uint8_t WichStripeIsOn;
-uint8_t LedStripeMode = SWITCH_MODE;
+led_type WichStripeIsOn;
+led_mode LedStripeMode = SWITCH_MODE;
 uint8_t SwitchTime = 60;
 int 	Brightness = MAX_BRIGHTNESS;
 int 	OldBrightness = MAX_BRIGHTNESS;
@@ -66,36 +71,32 @@ void InputCtrl(void);
 int WichMode = 0;
 
 /**
- * @brief Funzione per il blinking del led di stato
- * 
- * @param WichLed 
- * @param Delay 
- * @param Times 
+ * @brief Funzione per gestire puntualmente il led di stato
+ *  
+ * @param Status 
  */
-static void BlinkLed(int WichLed, int Delay, int Times)
+static void TurnStatusLed(bool Status)
 {
-	for(int i = 0; i < Times; i++)
-	{
-		digitalWrite(WichLed, HIGH);
-		delay(Delay);
-		digitalWrite(WichLed, LOW);
-		delay(Delay);
-	}	
+	digitalWrite(STATUS_LED, (uint8_t)Status);
 }
 
 /**
- * @brief Funzione per gestire i singoli pin digitali
+ * @brief Funzione per il blinking del led di stato
  * 
- * @param WichLed 
- * @param Status 
+ * @param Delay 
+ * @param Times 
  */
-static void TurnPin(int WichLed, bool Status)
+static void BlinkStatusLed(int Delay, int Times)
 {
-	if(Status)
-		digitalWrite(WichLed, HIGH);
-	else
-		digitalWrite(WichLed, LOW);
+	bool Toggle = ON;
+	for(int i = 0; i < Times; i++)
+	{
+		TurnStatusLed(Toggle);
+		delay(Delay);
+		Toggle = !Toggle;
+	}	
 }
+
 
 /**
  * @brief Funzione per gestire le uscite "analogiche" PWM
@@ -103,12 +104,25 @@ static void TurnPin(int WichLed, bool Status)
  * @param WichLed 
  * @param BrightPerc 
  */
-static void TurnAnalogPin(int WichLed, int BrightPerc)
+static void TurnLedStripe(led_type WichLed, int BrightPerc)
 {
+	int pin;
+	switch (WichLed)
+	{
+	case NIGHT_LED:
+		pin = NIGHT_LED_PIN;
+		break;
+	case DAY_LED:
+		pin = DAY_LED_PIN;
+		break;
+	default:
+		pin = NIGHT_LED_PIN;
+		break;
+	}
 	if(BrightPerc >= MIN_BRIGHTNESS && BrightPerc <= MAX_BRIGHTNESS)
-		analogWrite(WichLed, PERC_TO_BRIGHTNESS(BrightPerc));
+		analogWrite(pin, PERC_TO_BRIGHTNESS(BrightPerc));
 	else
-		analogWrite(WichLed, MAX_ANALOG_BRIGHTNESS);
+		analogWrite(pin, MAX_ANALOG_BRIGHTNESS);
 }
  
 /**
@@ -117,44 +131,44 @@ static void TurnAnalogPin(int WichLed, int BrightPerc)
  */
 static void FadeLedStrips()
 {
-	uint8_t LedToTurnOn = 0, LedToTurnOff = 0;
-	if(WichStripeIsOn == NIGHT_LED_STRIP)
+	led_type LedToTurnOn = NO_LED, LedToTurnOff = NO_LED;
+	if(WichStripeIsOn == NIGHT_LED)
 	{
-		LedToTurnOn = DAY_LED_STRIP;
-		LedToTurnOff = NIGHT_LED_STRIP;
+		LedToTurnOn = DAY_LED;
+		LedToTurnOff = NIGHT_LED;
 	}
 	else
 	{
-		LedToTurnOn = NIGHT_LED_STRIP;
-		LedToTurnOff = DAY_LED_STRIP;
+		LedToTurnOn = NIGHT_LED;
+		LedToTurnOff = DAY_LED;
 	}
-	TurnPin(STATUS_LED, ON);
+	TurnStatusLed(ON);
 	if(Brightness > MIN_BRIGHTNESS)
 	{
 		// Lo switch avviene in maniera soft ovvero per passsare da una
 		// modalita all'altra ci mette FADING_DELAY (25ms * 100)
 		for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
 		{
-			TurnAnalogPin(LedToTurnOff, i);
+			TurnLedStripe(LedToTurnOff, i);
 			// CheckButton();
 			CALC_FADING_DELAY(Brightness);
 		}
 		for(int i = MIN_BRIGHTNESS; i <= Brightness; i++)
 		{
-			TurnAnalogPin(LedToTurnOn, i);
+			TurnLedStripe(LedToTurnOn, i);
 			// CheckButton();
 			CALC_FADING_DELAY(Brightness);
 		}
 	}
 	else
 		delay(1000);
-	TurnPin(STATUS_LED, OFF);
+	TurnStatusLed(OFF);
 	WichStripeIsOn = LedToTurnOn;
 }
 
-#ifdef POT_FADING
 void ReadPotValue()
 {
+#ifdef POT_FADING
 	int val = 0;
 	const int sample = 10;
 	const int maxAnalogRead = 1023;
@@ -165,30 +179,47 @@ void ReadPotValue()
 	{
 		Brightness = (val * MAX_BRIGHTNESS) / maxAnalogRead;
 	}
-}
+#else
+	Brightness = MAX_BRIGHTNESS;
 #endif
+}
 
 
 void CheckButton()
 {
 	if(digitalRead(CHANGE_MODE) == HIGH)
 	{
-		if(LedStripeMode < MAX_MODES - 1)
-			LedStripeMode++;
-		else
+		switch (LedStripeMode)
+		{
+		case OFF_MODE:
+			LedStripeMode = DAY_MODE;
+			break;
+		case DAY_MODE:
+			LedStripeMode = NIGHT_MODE;
+			break;
+		case NIGHT_MODE:
+			LedStripeMode = SWITCH_MODE;
+			break;
+		case SWITCH_MODE:
 			LedStripeMode = OFF_MODE;
-		BlinkLed(STATUS_LED, 5, 1);
+			break;
+		default:
+			break;
+		}
+		BlinkStatusLed(5, 1);
 		delay(20);
 	}
 }
 
-
+/**
+ * @brief Funzione per il controllo della pressione del pulsante per il cambio di modalità
+ * 			e nel caso di POT_FADING abilitato, controlla la luminosità dei led tramite potenziometro
+ * 
+ */
 void InputCtrl()
 {
-	CheckButton();
-#ifdef POT_FADING	
+	CheckButton();	
 	ReadPotValue();
-#endif	
 }
 
 void setup()
@@ -198,22 +229,20 @@ void setup()
 	SwitchTimer.stop();
 
 	// Inizializzo i vari pin che mi serviranno
-	pinMode(NIGHT_LED_STRIP, OUTPUT);
-	pinMode(DAY_LED_STRIP, OUTPUT);
+	pinMode(NIGHT_LED_PIN, OUTPUT);
+	pinMode(DAY_LED_PIN, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
 	pinMode(CHANGE_MODE, INPUT);
 
-	
-	delay(1000);
-	Brightness = MIN_BRIGHTNESS;
-	BlinkLed(STATUS_LED, 25, 10);
-	TurnAnalogPin(NIGHT_LED_STRIP, Brightness);	
-	TurnAnalogPin(DAY_LED_STRIP, Brightness);	
+	BlinkStatusLed(25, 10);
+	TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);	
+	TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);	
 	SwitchTimer.restart();
-	WichStripeIsOn = NIGHT_LED_STRIP;
+	WichStripeIsOn = NIGHT_LED;
+	TurnLedStripe(NIGHT_LED, MAX_BRIGHTNESS);
 	LedStripeMode = SWITCH_MODE;
 	WichMode = MAX_MODES;
-	TurnPin(STATUS_LED, OFF);
+	TurnStatusLed(OFF);
 	Brightness = MAX_BRIGHTNESS;
 }
 
@@ -226,84 +255,59 @@ void loop()
 	switch(LedStripeMode)
 	{
 		case OFF_MODE:
-			if(WichStripeIsOn != NO_STRIPE_ON)
+			if(WichStripeIsOn != NO_LED)
 			{
-				BlinkLed(STATUS_LED, 500, 2);
+				BlinkStatusLed(500, 2);
 				WichMode = OFF_MODE;
-				WichStripeIsOn = NO_STRIPE_ON;
-				TurnAnalogPin(NIGHT_LED_STRIP, MIN_BRIGHTNESS);
-				TurnAnalogPin(DAY_LED_STRIP, MIN_BRIGHTNESS);
+				WichStripeIsOn = NO_LED;
+				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
+				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
 			}
 			break;
 		case NIGHT_MODE:
-			if(WichStripeIsOn != NIGHT_LED_STRIP)
+			if(WichStripeIsOn != NIGHT_LED)
 			{
 				WichMode = NIGHT_MODE;
-				WichStripeIsOn = NIGHT_LED_STRIP;
-				BlinkLed(STATUS_LED, 100, 3);
-				TurnPin(STATUS_LED, OFF);
-			#ifdef POT_FADING
-				TurnAnalogPin(NIGHT_LED_STRIP, Brightness);
-			#else			
-				TurnAnalogPin(NIGHT_LED_STRIP, MAX_BRIGHTNESS);
-			#endif
-				TurnAnalogPin(DAY_LED_STRIP, 0);
+				WichStripeIsOn = NIGHT_LED;
+				BlinkStatusLed(100, 3);
+				TurnStatusLed(OFF);
+				TurnLedStripe(WichStripeIsOn, Brightness);
+				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
 			}
-			#ifdef POT_FADING
-			if(OldBrightness != Brightness)
-			{
-				TurnAnalogPin(NIGHT_LED_STRIP, Brightness);
-				OldBrightness = Brightness;
-			}
-			#endif
-
 			SwitchTimer.restart();
 			break;
 		case DAY_MODE:
-			if(WichStripeIsOn != DAY_LED_STRIP)
+			if(WichStripeIsOn != DAY_LED)
 			{
 				WichMode = DAY_MODE;
-				WichStripeIsOn = DAY_LED_STRIP;
-				BlinkLed(STATUS_LED, 100, 5);
-				TurnPin(STATUS_LED, OFF);				
-			#ifdef POT_FADING
-				TurnAnalogPin(DAY_LED_STRIP, Brightness);
-			#else			
-				TurnAnalogPin(DAY_LED_STRIP, MAX_BRIGHTNESS);
-			#endif
-				TurnAnalogPin(NIGHT_LED_STRIP, 0);
-			}	
-			#ifdef POT_FADING
-			if(OldBrightness != Brightness)
-			{
-				TurnAnalogPin(DAY_LED_STRIP, Brightness);
-				OldBrightness = Brightness;
-			}			
-			#endif
+				WichStripeIsOn = DAY_LED;
+				BlinkStatusLed(100, 5);
+				TurnStatusLed(OFF);				
+				TurnLedStripe(WichStripeIsOn, Brightness);
+				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
+			}		
 			SwitchTimer.restart();	
 			break;
 		case SWITCH_MODE:
 			if(WichMode != SWITCH_MODE)
 			{
 				WichMode = SWITCH_MODE;
-				BlinkLed(STATUS_LED, 80, 10);
-				TurnPin(STATUS_LED, OFF);
+				BlinkStatusLed(80, 10);
+				TurnStatusLed(OFF);
 			}
 			if(SwitchTimer.hasPassed(SwitchTime)) // 60s per lo switch
 			{
 				SwitchTimer.stop();
 				FadeLedStrips();
 				SwitchTimer.restart();
-			}	
-			#ifdef POT_FADING
-			if(OldBrightness != Brightness)
-			{
-				TurnAnalogPin(WichStripeIsOn, Brightness);
-				OldBrightness = Brightness;
-			}			
-			#endif							
+			}				
 			break;
 		default:
 			break;
 	}
+	if(OldBrightness != Brightness && LedStripeMode != OFF_MODE)
+	{
+		TurnLedStripe(WichStripeIsOn, Brightness);
+		OldBrightness = Brightness;
+	}			
 }
