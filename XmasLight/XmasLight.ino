@@ -9,8 +9,6 @@
 
 #define POT_FADING	
 
-#undef BUTTON_DBG	
-
 #define ON 			  true
 #define OFF			  false
 
@@ -66,7 +64,13 @@ void InputCtrl(void);
 
 int WichMode = 0;
 
-// Funzione per gestire il led di stato
+/**
+ * @brief Funzione per il blinking del led di stato
+ * 
+ * @param WichLed 
+ * @param Delay 
+ * @param Times 
+ */
 static void BlinkLed(int WichLed, int Delay, int Times)
 {
 	for(int i = 0; i < Times; i++)
@@ -78,7 +82,12 @@ static void BlinkLed(int WichLed, int Delay, int Times)
 	}	
 }
 
-// Funzione per gestire i singoli pin digitali
+/**
+ * @brief Funzione per gestire i singoli pin digitali
+ * 
+ * @param WichLed 
+ * @param Status 
+ */
 static void TurnPin(int WichLed, bool Status)
 {
 	if(Status)
@@ -87,7 +96,12 @@ static void TurnPin(int WichLed, bool Status)
 		digitalWrite(WichLed, LOW);
 }
 
-// Funzione per gestire le uscite "analogiche" PWM
+/**
+ * @brief Funzione per gestire le uscite "analogiche" PWM
+ * 
+ * @param WichLed 
+ * @param AnalogBright 
+ */
 static void TurnAnalogPin(int WichLed, int AnalogBright)
 {
 	if(AnalogBright >= MIN_BRIGHTNESS && AnalogBright <= MAX_BRIGHTNESS)
@@ -96,7 +110,10 @@ static void TurnAnalogPin(int WichLed, int AnalogBright)
 		analogWrite(WichLed, MAX_BRIGHTNESS);
 }
  
-// Funzione per la gestione dello switch tra giorno e notte
+/**
+ * @brief Funzione per la gestione dello switch tra giorno e notte
+ * 
+ */
 static void FadeLedStrips()
 {
 	uint8_t LedToTurnOn = 0, LedToTurnOff = 0;
@@ -143,12 +160,6 @@ void ReadPotValue()
 	for(int i = 0; i < sample; i++)
 		val += analogRead(POTENTIOMETER);
 	val /= sample;
-	// if(val < 512)
-	// 	Brightness = 0;
-	// else if(val < 900)
-	// 	Brightness = 127;
-	// else
-	// 	Brightness = MAX_BRIGHTNESS;
 	for(int i = 0; i < 21; i++)
 	{
 		if(val >= (milleIncrement * i) && val < (milleIncrement * (i+1)))
@@ -157,91 +168,11 @@ void ReadPotValue()
 			break;
 		}
 	}
-	// if(val >= 0 && val < milleIncrement)
-	// 	Brightness = pwmincrement;
-	// else if(val >= milleIncrement && val < milleIncrement * 2)
-	// 	Brightness = 0;
-	// else if(val >= milleIncrement * 2 && val < milleIncrement * 3)
-	// 	Brightness = pwmincrement * 2;
-	// else if(val >= milleIncrement * 3 && val < milleIncrement * 4)
-	// 	Brightness = pwmincrement * 4;
-	// else if(val >= milleIncrement * 4 && val < milleIncrement * 5)
-	// 	Brightness = pwmincrement * 5;
-	// else if(val >= milleIncrement * 5 && val < milleIncrement * 6)
-	// 	Brightness = pwmincrement * 6;
-	// else if(val >= milleIncrement * 6 && val < milleIncrement * 7)
-	// 	Brightness = pwmincrement * 7;
-	// else if(val >= milleIncrement * 7 && val < milleIncrement * 8)
-	// 	Brightness = pwmincrement * 8;
-	// else if(val >= milleIncrement * 8 && val < milleIncrement * 9)
-	// 	Brightness = pwmincrement * 9;
-	// else if(val >= milleIncrement * 9 && val < milleIncrement * 10)
-	// 	Brightness = pwmincrement * 10;
-	// else if(val >= milleIncrement * 10 && val < milleIncrement * 11)
-	// 	Brightness = pwmincrement * 11;
-	// else if(val >= milleIncrement * 11 && val < milleIncrement * 12)
-	// 	Brightness = pwmincrement * 12;
-	// else if(val >= milleIncrement * 12 && val < milleIncrement * 13)
-	// 	Brightness = pwmincrement * 13;	
-	// else if(val >= milleIncrement * 13 && val < milleIncrement * 14)
-	// 	Brightness = pwmincrement * 14;
-	// else if(val >= milleIncrement * 14 && val < milleIncrement * 15)
-	// 	Brightness = pwmincrement * 15;
-	// else if(val >= milleIncrement * 15 && val < milleIncrement * 16)
-	// 	Brightness = pwmincrement * 16;
-	// else if(val >= milleIncrement * 16 && val < milleIncrement * 17)
-	// 	Brightness = pwmincrement * 17;
-	// else if(val >= milleIncrement * 17 && val < milleIncrement * 18)
-	// 	Brightness = pwmincrement * 18;
-	// else if(val >= milleIncrement * 18 && val < milleIncrement * 19)
-	// 	Brightness = pwmincrement * 19;
-	// else if(val >= milleIncrement * 19 && val < milleIncrement * 20)
-	// 	Brightness = pwmincrement * 21;
-	// else if(val >= 850 && val < 1023)
-	// 	Brightness = pwmincrement * 21;	
 	return;
 }
 #endif
 
 
-#ifdef BUTTON_DBG
-void CheckButton()
-{
-	int Cnt = 0;
-	if(digitalRead(CHANGE_MODE) == HIGH)
-	{
-		delay(100);
-		// Per debug, se viene tenuto premuto 5s si cambia il tempo
-		// di switch da 90s a 5s e viceversa
-		while(digitalRead(CHANGE_MODE) == HIGH) 
-		{
-			if(Cnt == 250)
-			{
-				if(SwitchTime != 5)
-					SwitchTime = 5;
-				else
-					SwitchTime = 90;
-				break;
-			}
-			Cnt++;
-			delay(20);
-		}
-		if(Cnt < 50)
-		{
-			if(LedStripeMode < MAX_MODES - 1)
-				LedStripeMode++;
-			else
-				LedStripeMode = NIGHT_MODE;
-			EEPROM.update(LED_MODE_ADDR, LedStripeMode);
-			BlinkLed(STATUS_LED, 5, 1);
-		}
-		else
-		{
-			BlinkLed(STATUS_LED, 5, 20);
-		}
-	}
-}	
-#else
 void CheckButton()
 {
 	if(digitalRead(CHANGE_MODE) == HIGH)
@@ -254,7 +185,7 @@ void CheckButton()
 		delay(20);
 	}
 }
-#endif
+
 
 void InputCtrl()
 {
