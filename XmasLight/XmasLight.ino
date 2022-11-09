@@ -4,36 +4,37 @@
 #include <Chrono.h>
 #include <EEPROM.h>
 
-#define FW_VERSION	 0.4
+#define FW_VERSION	 					0.4
 
 
 #define POT_FADING	
 
-#define ON 			  true
-#define OFF			  false
+#define ON 			  					true
+#define OFF			  					false
 
-#define NIGHT_LED_STRIP   	 0
-#define DAY_LED_STRIP   	 1
-#define STATUS_LED 	 		 4
-#define CHANGE_MODE	 		 2
+#define NIGHT_LED_STRIP   	 			0
+#define DAY_LED_STRIP   	 			1
+#define STATUS_LED 	 		 			4
+#define CHANGE_MODE	 		 			2
 
-#define LED_MODE_ADDR		 0
+#define LED_MODE_ADDR		 			0
 
 #ifdef POT_FADING
-#define POTENTIOMETER		 A3
+#define POTENTIOMETER		 			A3
 #endif
 
-#define NO_STRIPE_ON  		10
+#define NO_STRIPE_ON  					10
 
-#define SWITCH_STRIP_TIME 	1
+#define SWITCH_STRIP_TIME 				1
 
-#define MIN_BRIGHTNESS	      0
-#define MAX_BRIGHTNESS		250
+#define MAX_ANALOG_BRIGHTNESS			255
+#define MIN_BRIGHTNESS	      			0
+#define MAX_BRIGHTNESS					100
+
+#define PERC_TO_BRIGHTNESS(perc)	((perc * MAX_ANALOG_BRIGHTNESS) / 100)
 
 #define FADING_DELAY                    (20 * 1000)
-#define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / brightness))
-
-// #define PERCENT(Perc)		(int)((Perc * 255)/MAX_BRIGHTNESS) // Questa è una macro per converire il fading in percentuale
+#define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
 
 
 
@@ -100,14 +101,14 @@ static void TurnPin(int WichLed, bool Status)
  * @brief Funzione per gestire le uscite "analogiche" PWM
  * 
  * @param WichLed 
- * @param AnalogBright 
+ * @param BrightPerc 
  */
-static void TurnAnalogPin(int WichLed, int AnalogBright)
+static void TurnAnalogPin(int WichLed, int BrightPerc)
 {
-	if(AnalogBright >= MIN_BRIGHTNESS && AnalogBright <= MAX_BRIGHTNESS)
-		analogWrite(WichLed, AnalogBright);
+	if(BrightPerc >= MIN_BRIGHTNESS && BrightPerc <= MAX_BRIGHTNESS)
+		analogWrite(WichLed, PERC_TO_BRIGHTNESS(BrightPerc));
 	else
-		analogWrite(WichLed, MAX_BRIGHTNESS);
+		analogWrite(WichLed, MAX_ANALOG_BRIGHTNESS);
 }
  
 /**
@@ -155,20 +156,15 @@ static void FadeLedStrips()
 void ReadPotValue()
 {
 	int val = 0;
-	int sample = 10;
-	int milleIncrement = 51, pwmincrement = 12;
+	const int sample = 10;
+	const int maxAnalogRead = 1023;
 	for(int i = 0; i < sample; i++)
 		val += analogRead(POTENTIOMETER);
 	val /= sample;
-	for(int i = 0; i < 21; i++)
+	if(val >= 0 && val <= maxAnalogRead)
 	{
-		if(val >= (milleIncrement * i) && val < (milleIncrement * (i+1)))
-		{
-			Brightness = pwmincrement * (i + 1);
-			break;
-		}
+		Brightness = (val * MAX_BRIGHTNESS) / maxAnalogRead;
 	}
-	return;
 }
 #endif
 
