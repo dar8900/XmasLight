@@ -3,8 +3,8 @@
 
 #define MAX_BRIGHTNESS_PERC             100
 #define DIMMING_TIME                    20000 // in ms
-#define POT_SAMPLE                      50
-#define POT_SAMPLING_RATE               100 // in ms
+#define POT_SAMPLE                      25
+#define POT_SAMPLING_RATE               10 // in ms
 // #define SWITCH_LEDS_TIME                2000 // in ms
 #define LED_DIMMING_ENGINE_CYCLE        80
 
