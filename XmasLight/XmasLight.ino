@@ -36,6 +36,8 @@
 #define FADING_DELAY                    (20 * 1000)
 #define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
 
+#define OLD_LED_FADING	
+
 typedef enum
 {
 	NIGHT_LED = 0,
@@ -147,6 +149,7 @@ static void FadeLedStrips()
 	{
 		// Lo switch avviene in maniera soft ovvero per passsare da una
 		// modalita all'altra ci mette FADING_DELAY (25ms * 100)
+#ifdef OLD_FADING
 		for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
 		{
 			TurnLedStripe(LedToTurnOff, i);
@@ -159,6 +162,36 @@ static void FadeLedStrips()
 			// CheckButton();
 			CALC_FADING_DELAY(Brightness);
 		}
+#else
+		const uint8_t brightSwitch = 10;
+		for(int i = MIN_BRIGHTNESS; i <= Brightness * 2; i++)
+		{
+			if(i < Brightness - brightSwitch)
+			{
+				TurnLedStripe(LedToTurnOff, Brightness - i);
+			}
+			else
+			{
+				if(i <= Brightness)
+				{
+					TurnLedStripe(LedToTurnOff, (Brightness - i));
+					TurnLedStripe(LedToTurnOn, brightSwitch - (Brightness - i));
+				}
+				else
+				{
+					if(brightSwitch + (i - Brightness) <= Brightness)
+					{
+						TurnLedStripe(LedToTurnOn, brightSwitch + (i - Brightness));
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			CALC_FADING_DELAY(Brightness);
+		}
+#endif
 	}
 	else
 		delay(1000);
