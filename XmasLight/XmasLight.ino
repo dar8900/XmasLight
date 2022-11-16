@@ -7,7 +7,7 @@
 #define FW_VERSION	 					0.4
 
 
-#define POT_FADING	
+// #define POT_FADING	
 
 #define ON 			  					true
 #define OFF			  					false
@@ -36,7 +36,9 @@
 #define FADING_DELAY                    (20 * 1000)
 #define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
 
-#define OLD_LED_FADING	
+#define SWITCH_LED_DELAY				10 // in s
+
+// #define OLD_LED_FADING	
 
 typedef enum
 {
@@ -58,7 +60,6 @@ typedef enum
 Chrono SwitchTimer(Chrono::SECONDS);
 led_type WichStripeIsOn;
 led_mode LedStripeMode = SWITCH_MODE;
-uint8_t SwitchTime = 60;
 int 	Brightness = MAX_BRIGHTNESS;
 int 	OldBrightness = MAX_BRIGHTNESS;
 
@@ -149,7 +150,7 @@ static void FadeLedStrips()
 	{
 		// Lo switch avviene in maniera soft ovvero per passsare da una
 		// modalita all'altra ci mette FADING_DELAY (25ms * 100)
-#ifdef OLD_FADING
+#ifdef OLD_LED_FADING
 		for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
 		{
 			TurnLedStripe(LedToTurnOff, i);
@@ -267,7 +268,9 @@ void setup()
 	pinMode(STATUS_LED, OUTPUT);
 	pinMode(CHANGE_MODE, INPUT);
 
-	BlinkStatusLed(25, 10);
+	delay(2000);
+
+	BlinkStatusLed(500, 5);
 	TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);	
 	TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);	
 	SwitchTimer.restart();
@@ -297,18 +300,6 @@ void loop()
 				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
 			}
 			break;
-		case NIGHT_MODE:
-			if(WichStripeIsOn != NIGHT_LED)
-			{
-				WichMode = NIGHT_MODE;
-				WichStripeIsOn = NIGHT_LED;
-				BlinkStatusLed(100, 3);
-				TurnStatusLed(OFF);
-				TurnLedStripe(WichStripeIsOn, Brightness);
-				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
-			}
-			SwitchTimer.restart();
-			break;
 		case DAY_MODE:
 			if(WichStripeIsOn != DAY_LED)
 			{
@@ -321,6 +312,18 @@ void loop()
 			}		
 			SwitchTimer.restart();	
 			break;
+		case NIGHT_MODE:
+			if(WichStripeIsOn != NIGHT_LED)
+			{
+				WichMode = NIGHT_MODE;
+				WichStripeIsOn = NIGHT_LED;
+				BlinkStatusLed(100, 3);
+				TurnStatusLed(OFF);
+				TurnLedStripe(WichStripeIsOn, Brightness);
+				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
+			}
+			SwitchTimer.restart();
+			break;
 		case SWITCH_MODE:
 			if(WichMode != SWITCH_MODE)
 			{
@@ -328,7 +331,7 @@ void loop()
 				BlinkStatusLed(80, 10);
 				TurnStatusLed(OFF);
 			}
-			if(SwitchTimer.hasPassed(SwitchTime)) // 60s per lo switch
+			if(SwitchTimer.hasPassed(SWITCH_LED_DELAY)) // 60s per lo switch
 			{
 				SwitchTimer.stop();
 				FadeLedStrips();
