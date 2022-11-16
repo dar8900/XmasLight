@@ -4,10 +4,10 @@
 #include <Chrono.h>
 #include <EEPROM.h>
 
-#define FW_VERSION	 					0.4
+#define FW_VERSION	 					0.5
 
 
-// #define POT_FADING	
+#define POT_FADING	
 
 #define ON 			  					true
 #define OFF			  					false
@@ -36,7 +36,7 @@
 #define FADING_DELAY                    (20 * 1000)
 #define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
 
-#define SWITCH_LED_DELAY				10 // in s
+#define SWITCH_LED_DELAY				60 // in s
 
 // #define OLD_LED_FADING	
 
