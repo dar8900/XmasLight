@@ -92,7 +92,7 @@ static void TurnStatusLed(bool Status)
 static void BlinkStatusLed(int Delay, int Times)
 {
 	bool Toggle = ON;
-	for(int i = 0; i < Times; i++)
+	for(int i = 0; i < Times * 2; i++)
 	{
 		TurnStatusLed(Toggle);
 		delay(Delay);
