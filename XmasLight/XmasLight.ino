@@ -4,7 +4,7 @@
 #include <Chrono.h>
 #include <EEPROM.h>
 
-#define FW_VERSION	 					0.5
+#define FW_VERSION	 					0.6
 
 
 #define POT_FADING	
@@ -31,11 +31,12 @@
 #define MIN_BRIGHTNESS	      			0
 #define MAX_BRIGHTNESS					100
 
-#define PERC_TO_BRIGHTNESS(perc)	((perc * MAX_ANALOG_BRIGHTNESS) / 100)
+#define PERC_TO_BRIGHTNESS(perc)		((perc * MAX_ANALOG_BRIGHTNESS) / 100)
 
 #define FADING_DELAY                    (20 * 1000)
 #define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
 
+#define START_DELAY						1000 // in ms
 #define SWITCH_LED_DELAY				60 // in s
 
 // #define OLD_LED_FADING	
@@ -57,7 +58,7 @@ typedef enum
 	MAX_MODES
 }led_mode;
 
-Chrono SwitchTimer(Chrono::SECONDS);
+Chrono SwitchTimer(Chrono::SECONDS, false);
 led_type WichStripeIsOn;
 led_mode LedStripeMode = SWITCH_MODE;
 int 	Brightness = MAX_BRIGHTNESS;
@@ -203,15 +204,21 @@ static void FadeLedStrips()
 void ReadPotValue()
 {
 #ifdef POT_FADING
-	int val = 0;
+	uint32_t val = 0;
 	const int sample = 10;
 	const int maxAnalogRead = 1023;
 	for(int i = 0; i < sample; i++)
+	{
 		val += analogRead(POTENTIOMETER);
+	}
 	val /= sample;
 	if(val >= 0 && val <= maxAnalogRead)
 	{
 		Brightness = (val * MAX_BRIGHTNESS) / maxAnalogRead;
+	}
+	else
+	{
+		Brightness = MAX_BRIGHTNESS;
 	}
 #else
 	Brightness = MAX_BRIGHTNESS;
@@ -241,7 +248,7 @@ void CheckButton()
 			break;
 		}
 		BlinkStatusLed(5, 1);
-		delay(20);
+		delay(50);
 	}
 }
 
@@ -258,18 +265,12 @@ void InputCtrl()
 
 void setup()
 {
-	// Inizializzo variabile per il cronometro
-	SwitchTimer.restart();
-	SwitchTimer.stop();
-
 	// Inizializzo i vari pin che mi serviranno
 	pinMode(NIGHT_LED_PIN, OUTPUT);
 	pinMode(DAY_LED_PIN, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
 	pinMode(CHANGE_MODE, INPUT);
-
-	delay(2000);
-
+	delay(START_DELAY);
 	BlinkStatusLed(500, 5);
 	TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);	
 	TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);	
@@ -280,6 +281,7 @@ void setup()
 	WichMode = MAX_MODES;
 	TurnStatusLed(OFF);
 	Brightness = MAX_BRIGHTNESS;
+	SwitchTimer.start();
 }
 
 
@@ -310,7 +312,6 @@ void loop()
 				TurnLedStripe(WichStripeIsOn, Brightness);
 				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
 			}		
-			SwitchTimer.restart();	
 			break;
 		case NIGHT_MODE:
 			if(WichStripeIsOn != NIGHT_LED)
@@ -322,7 +323,6 @@ void loop()
 				TurnLedStripe(WichStripeIsOn, Brightness);
 				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
 			}
-			SwitchTimer.restart();
 			break;
 		case SWITCH_MODE:
 			if(WichMode != SWITCH_MODE)
@@ -330,8 +330,9 @@ void loop()
 				WichMode = SWITCH_MODE;
 				BlinkStatusLed(80, 10);
 				TurnStatusLed(OFF);
+				SwitchTimer.restart();
 			}
-			if(SwitchTimer.hasPassed(SWITCH_LED_DELAY)) // 60s per lo switch
+			if(SwitchTimer.hasPassed(SWITCH_LED_DELAY))
 			{
 				SwitchTimer.stop();
 				FadeLedStrips();
