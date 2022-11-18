@@ -3,30 +3,28 @@
 #include <stdint.h>
 #include "src/Buttonlib/ButtonLib.h"
 #include "src/Timerlib/Timer.hpp"
-#include <Chrono.h>
 
 #define FW_VERSION	 					0.6
 
+/********** DEFINIZIONE MODALITÀ OPERATIVE ALTERNATIVE **********/
 
-#define POT_FADING	
+#define POT_FADING			1   // Abilita la lettura del potenziometro per la regolazione della massima luminosità
+#define OLD_LED_FADING		0	// Abilita la vecchia modalità di fading dei led
+
+/****************************************************************/
 
 #define ON 			  					true
 #define OFF			  					false
+#define SEC_2_MS(sec)					(sec * 1000)
 
 #define NIGHT_LED_PIN	   	 			0
 #define DAY_LED_PIN		  	 			1
 #define STATUS_LED 	 		 			4
 #define CHANGE_MODE	 		 			2
 
-#define LED_MODE_ADDR		 			0
-
-#ifdef POT_FADING
+#if POT_FADING
 #define POTENTIOMETER		 			A3
 #endif
-
-#define NO_STRIPE_ON  					10
-
-#define SWITCH_STRIP_TIME 				1
 
 #define MAX_ANALOG_BRIGHTNESS			255
 #define MIN_BRIGHTNESS	      			0
@@ -34,13 +32,11 @@
 
 #define PERC_TO_BRIGHTNESS(perc)		((perc * MAX_ANALOG_BRIGHTNESS) / 100)
 
-#define FADING_DELAY                    (20 * 1000)
-#define CALC_FADING_DELAY(brightness)	(delay(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness)))
+#define FADING_DELAY                    SEC_2_MS(20)
+#define CALC_FADING_DELAY(brightness)	(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness))
 
-#define START_DELAY						1000 // in ms
-#define SWITCH_LED_DELAY				60 // in s
-
-// #define OLD_LED_FADING	
+#define START_DELAY						SEC_2_MS(1) // in ms
+#define SWITCH_LED_DELAY				SEC_2_MS(60) // in ms
 
 typedef enum
 {
@@ -59,21 +55,13 @@ typedef enum
 	MAX_MODES
 }led_mode;
 
-Chrono SwitchTimer(Chrono::SECONDS, false);
-led_type WichStripeIsOn;
-led_mode LedStripeMode = SWITCH_MODE;
-int 	Brightness = MAX_BRIGHTNESS;
-int 	OldBrightness = MAX_BRIGHTNESS;
-
-
-void CheckButton(void);
-#ifdef POT_FADING
-void ReadPotValue(void);
-#endif
-
-void InputCtrl(void);
-
-int WichMode = 0;
+static Timer SwitchTimer;
+static ButtonManager ButtonModeSwitch;
+static led_type WichStripeIsOn;
+static led_mode LedStripeMode = SWITCH_MODE;
+static int 	Brightness = MAX_BRIGHTNESS;
+static int 	OldBrightness = MAX_BRIGHTNESS;
+static led_mode ActualMode = MAX_MODES;
 
 /**
  * @brief Funzione per gestire puntualmente il led di stato
@@ -111,7 +99,7 @@ static void BlinkStatusLed(int Delay, int Times)
  */
 static void TurnLedStripe(led_type WichLed, int BrightPerc)
 {
-	int pin;
+	uint8_t pin;
 	switch (WichLed)
 	{
 	case NIGHT_LED:
@@ -150,20 +138,18 @@ static void FadeLedStrips()
 	TurnStatusLed(ON);
 	if(Brightness > MIN_BRIGHTNESS)
 	{
-		// Lo switch avviene in maniera soft ovvero per passsare da una
-		// modalita all'altra ci mette FADING_DELAY (25ms * 100)
-#ifdef OLD_LED_FADING
+#if OLD_LED_FADING
 		for(int i = Brightness; i >= MIN_BRIGHTNESS; i--)
 		{
 			TurnLedStripe(LedToTurnOff, i);
 			// CheckButton();
-			CALC_FADING_DELAY(Brightness);
+			delay(CALC_FADING_DELAY(Brightness));
 		}
 		for(int i = MIN_BRIGHTNESS; i <= Brightness; i++)
 		{
 			TurnLedStripe(LedToTurnOn, i);
 			// CheckButton();
-			CALC_FADING_DELAY(Brightness);
+			delay(CALC_FADING_DELAY(Brightness));
 		}
 #else
 		const uint8_t brightSwitch = 10;
@@ -192,7 +178,7 @@ static void FadeLedStrips()
 					}
 				}
 			}
-			CALC_FADING_DELAY(Brightness);
+			delay(CALC_FADING_DELAY(Brightness));
 		}
 #endif
 	}
@@ -202,9 +188,9 @@ static void FadeLedStrips()
 	WichStripeIsOn = LedToTurnOn;
 }
 
-void ReadPotValue()
+static void ReadPotValue()
 {
-#ifdef POT_FADING
+#if POT_FADING
 	uint32_t val = 0;
 	const int sample = 10;
 	const int maxAnalogRead = 1023;
@@ -227,9 +213,9 @@ void ReadPotValue()
 }
 
 
-void CheckButton()
+static void CheckButton()
 {
-	if(digitalRead(CHANGE_MODE) == HIGH)
+	if(ButtonModeSwitch.getButtonMode() == ButtonManager::button_press_mode::short_press)
 	{
 		switch (LedStripeMode)
 		{
@@ -248,9 +234,9 @@ void CheckButton()
 		default:
 			break;
 		}
-		BlinkStatusLed(5, 1);
-		delay(50);
+		BlinkStatusLed(5, 1);		
 	}
+	ButtonModeSwitch.buttonEngine();
 }
 
 /**
@@ -258,7 +244,7 @@ void CheckButton()
  * 			e nel caso di POT_FADING abilitato, controlla la luminosità dei led tramite potenziometro
  * 
  */
-void InputCtrl()
+static void InputCtrl()
 {
 	CheckButton();	
 	ReadPotValue();
@@ -270,7 +256,7 @@ void setup()
 	pinMode(NIGHT_LED_PIN, OUTPUT);
 	pinMode(DAY_LED_PIN, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
-	pinMode(CHANGE_MODE, INPUT);
+	ButtonModeSwitch.setup(CHANGE_MODE, SEC_2_MS(2));
 	delay(START_DELAY);
 	BlinkStatusLed(500, 5);
 	TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);	
@@ -279,10 +265,10 @@ void setup()
 	WichStripeIsOn = NIGHT_LED;
 	TurnLedStripe(NIGHT_LED, MAX_BRIGHTNESS);
 	LedStripeMode = SWITCH_MODE;
-	WichMode = MAX_MODES;
+	ActualMode = MAX_MODES;
 	TurnStatusLed(OFF);
 	Brightness = MAX_BRIGHTNESS;
-	SwitchTimer.start();
+	SwitchTimer.start(SWITCH_LED_DELAY);
 }
 
 
@@ -297,7 +283,7 @@ void loop()
 			if(WichStripeIsOn != NO_LED)
 			{
 				BlinkStatusLed(500, 2);
-				WichMode = OFF_MODE;
+				ActualMode = OFF_MODE;
 				WichStripeIsOn = NO_LED;
 				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
 				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
@@ -306,7 +292,7 @@ void loop()
 		case DAY_MODE:
 			if(WichStripeIsOn != DAY_LED)
 			{
-				WichMode = DAY_MODE;
+				ActualMode = DAY_MODE;
 				WichStripeIsOn = DAY_LED;
 				BlinkStatusLed(100, 5);
 				TurnStatusLed(OFF);				
@@ -317,7 +303,7 @@ void loop()
 		case NIGHT_MODE:
 			if(WichStripeIsOn != NIGHT_LED)
 			{
-				WichMode = NIGHT_MODE;
+				ActualMode = NIGHT_MODE;
 				WichStripeIsOn = NIGHT_LED;
 				BlinkStatusLed(100, 3);
 				TurnStatusLed(OFF);
@@ -326,14 +312,14 @@ void loop()
 			}
 			break;
 		case SWITCH_MODE:
-			if(WichMode != SWITCH_MODE)
+			if(ActualMode != SWITCH_MODE)
 			{
-				WichMode = SWITCH_MODE;
+				ActualMode = SWITCH_MODE;
 				BlinkStatusLed(80, 10);
 				TurnStatusLed(OFF);
 				SwitchTimer.restart();
 			}
-			if(SwitchTimer.hasPassed(SWITCH_LED_DELAY))
+			if(SwitchTimer.isOver())
 			{
 				SwitchTimer.stop();
 				FadeLedStrips();
