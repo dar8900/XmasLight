@@ -87,7 +87,8 @@ static void BlinkStatusLed(int Delay, int Times)
 		TurnStatusLed(Toggle);
 		delay(Delay);
 		Toggle = !Toggle;
-	}	
+	}
+	TurnStatusLed(OFF);
 }
 
 
@@ -152,7 +153,7 @@ static void FadeLedStrips()
 			delay(CALC_FADING_DELAY(Brightness));
 		}
 #else
-		const uint8_t brightSwitch = 10;
+		const uint8_t brightSwitch = 10; // Percentuale di luminosità alla quale si inizia ad accendere l'altra striscia
 		for(int i = MIN_BRIGHTNESS; i <= Brightness * 2; i++)
 		{
 			if(i < Brightness - brightSwitch)
@@ -174,6 +175,7 @@ static void FadeLedStrips()
 					}
 					else
 					{
+						// Teoricamente ho raggiunto la massima luminosità impostata quindi esco
 						break;
 					}
 				}
@@ -250,6 +252,68 @@ static void InputCtrl()
 	ReadPotValue();
 }
 
+/**
+ * @brief Macchina a stati per la gestione delle varie modalità
+ * 
+ */
+static void LightManagment()
+{
+	switch(LedStripeMode)
+	{
+		case OFF_MODE:
+			if(WichStripeIsOn != NO_LED)
+			{
+				BlinkStatusLed(500, 2);
+				ActualMode = OFF_MODE;
+				WichStripeIsOn = NO_LED;
+				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
+				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
+			}
+			break;
+		case DAY_MODE:
+			if(WichStripeIsOn != DAY_LED)
+			{
+				ActualMode = DAY_MODE;
+				WichStripeIsOn = DAY_LED;
+				BlinkStatusLed(80, 3);
+				TurnLedStripe(WichStripeIsOn, Brightness);
+				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
+			}		
+			break;
+		case NIGHT_MODE:
+			if(WichStripeIsOn != NIGHT_LED)
+			{
+				ActualMode = NIGHT_MODE;
+				WichStripeIsOn = NIGHT_LED;
+				BlinkStatusLed(80, 5);
+				TurnLedStripe(WichStripeIsOn, Brightness);
+				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
+			}
+			break;
+		case SWITCH_MODE:
+			if(ActualMode != SWITCH_MODE)
+			{
+				ActualMode = SWITCH_MODE;
+				BlinkStatusLed(80, 10);
+				SwitchTimer.restart();
+			}
+			if(SwitchTimer.isOver())
+			{
+				SwitchTimer.stop();
+				FadeLedStrips();
+				SwitchTimer.restart();
+			}				
+			break;
+		default:
+			break;
+	}
+	if(OldBrightness != Brightness && LedStripeMode != OFF_MODE)
+	{
+		TurnLedStripe(WichStripeIsOn, Brightness);
+		OldBrightness = Brightness;
+	}	
+}
+
 void setup()
 {
 	// Inizializzo i vari pin che mi serviranno
@@ -276,62 +340,5 @@ void setup()
 void loop()
 {
 	InputCtrl();
-	// Macchina a stati per la gestione delle varie modalità 
-	switch(LedStripeMode)
-	{
-		case OFF_MODE:
-			if(WichStripeIsOn != NO_LED)
-			{
-				BlinkStatusLed(500, 2);
-				ActualMode = OFF_MODE;
-				WichStripeIsOn = NO_LED;
-				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
-				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
-			}
-			break;
-		case DAY_MODE:
-			if(WichStripeIsOn != DAY_LED)
-			{
-				ActualMode = DAY_MODE;
-				WichStripeIsOn = DAY_LED;
-				BlinkStatusLed(100, 5);
-				TurnStatusLed(OFF);				
-				TurnLedStripe(WichStripeIsOn, Brightness);
-				TurnLedStripe(NIGHT_LED, MIN_BRIGHTNESS);
-			}		
-			break;
-		case NIGHT_MODE:
-			if(WichStripeIsOn != NIGHT_LED)
-			{
-				ActualMode = NIGHT_MODE;
-				WichStripeIsOn = NIGHT_LED;
-				BlinkStatusLed(100, 3);
-				TurnStatusLed(OFF);
-				TurnLedStripe(WichStripeIsOn, Brightness);
-				TurnLedStripe(DAY_LED, MIN_BRIGHTNESS);
-			}
-			break;
-		case SWITCH_MODE:
-			if(ActualMode != SWITCH_MODE)
-			{
-				ActualMode = SWITCH_MODE;
-				BlinkStatusLed(80, 10);
-				TurnStatusLed(OFF);
-				SwitchTimer.restart();
-			}
-			if(SwitchTimer.isOver())
-			{
-				SwitchTimer.stop();
-				FadeLedStrips();
-				SwitchTimer.restart();
-			}				
-			break;
-		default:
-			break;
-	}
-	if(OldBrightness != Brightness && LedStripeMode != OFF_MODE)
-	{
-		TurnLedStripe(WichStripeIsOn, Brightness);
-		OldBrightness = Brightness;
-	}			
+	LightManagment();
 }
