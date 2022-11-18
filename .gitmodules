@@ -1,0 +1,6 @@
+[submodule "src/Timerlib"]
+	path = src/Timerlib
+	url = git@github.com:dar8900/TimerLib.git
+[submodule "src/Buttonlib"]
+	path = src/Buttonlib
+	url = git@github.com:dar8900/ButtonLib.git

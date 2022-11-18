@@ -1,8 +1,9 @@
 /* https://raw.githubusercontent.com/damellis/attiny/ide-1.6.x-boards-manager/package_damellis_attiny_index.json */
 
 #include <stdint.h>
+#include "src/Buttonlib/ButtonLib.h"
+#include "src/Timerlib/Timer.hpp"
 #include <Chrono.h>
-#include <EEPROM.h>
 
 #define FW_VERSION	 					0.6
 
