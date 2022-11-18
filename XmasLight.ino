@@ -36,7 +36,7 @@
 #define CALC_FADING_DELAY(brightness)	(FADING_DELAY / brightness)
 
 #define START_DELAY						SEC_2_MS(1) // in ms
-#define SWITCH_LED_DELAY				SEC_2_MS(60) // in ms
+#define SWITCH_LED_DELAY				SEC_2_MS(20) // in ms
 
 typedef enum
 {
@@ -295,7 +295,7 @@ static void LightManagment()
 			{
 				ActualMode = SWITCH_MODE;
 				BlinkStatusLed(80, 10);
-				SwitchTimer.restart(SWITCH_LED_DELAY);
+				SwitchTimer.restart(60000);
 			}
 			if(SwitchTimer.isOver())
 			{
@@ -332,7 +332,7 @@ void setup()
 	ActualMode = MAX_MODES;
 	TurnStatusLed(OFF);
 	Brightness = MAX_BRIGHTNESS;
-	SwitchTimer.start(SWITCH_LED_DELAY);
+	SwitchTimer.start(60000);
 }
 
 
