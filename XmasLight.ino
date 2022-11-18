@@ -4,7 +4,7 @@
 #include "src/Buttonlib/ButtonLib.h"
 #include "src/Timerlib/Timer.hpp"
 
-#define FW_VERSION	 					0.6
+#define FW_VERSION	 					0.7
 
 /********** DEFINIZIONE MODALITÀ OPERATIVE ALTERNATIVE **********/
 
@@ -33,7 +33,7 @@
 #define PERC_TO_BRIGHTNESS(perc)		((perc * MAX_ANALOG_BRIGHTNESS) / 100)
 
 #define FADING_DELAY                    SEC_2_MS(20)
-#define CALC_FADING_DELAY(brightness)	(FADING_DELAY / PERC_TO_BRIGHTNESS(brightness))
+#define CALC_FADING_DELAY(brightness)	(FADING_DELAY / brightness)
 
 #define START_DELAY						SEC_2_MS(1) // in ms
 #define SWITCH_LED_DELAY				SEC_2_MS(60) // in ms
@@ -295,11 +295,10 @@ static void LightManagment()
 			{
 				ActualMode = SWITCH_MODE;
 				BlinkStatusLed(80, 10);
-				SwitchTimer.restart();
+				SwitchTimer.restart(SWITCH_LED_DELAY);
 			}
 			if(SwitchTimer.isOver())
 			{
-				SwitchTimer.stop();
 				FadeLedStrips();
 				SwitchTimer.restart();
 			}				
@@ -320,6 +319,7 @@ void setup()
 	pinMode(NIGHT_LED_PIN, OUTPUT);
 	pinMode(DAY_LED_PIN, OUTPUT);
 	pinMode(STATUS_LED, OUTPUT);
+	pinMode(CHANGE_MODE, INPUT);
 	ButtonModeSwitch.setup(CHANGE_MODE, SEC_2_MS(2));
 	delay(START_DELAY);
 	BlinkStatusLed(500, 5);
